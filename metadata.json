@@ -1,0 +1,6 @@
+{
+  "name": "Cafe Journal",
+  "description": "Save your visited cafe experiences and recommendations.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
