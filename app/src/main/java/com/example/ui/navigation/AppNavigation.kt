@@ -95,7 +95,9 @@ fun AppNavigation() {
                 )
             }
             composable(ROUTE_LOCATIONS) {
-                LocationsScreen()
+                LocationsScreen(
+                    onCafeClick = { cafeId -> navController.navigate("cafe_detail/$cafeId") }
+                )
             }
             composable(ROUTE_STATS) {
                 StatsScreen()
