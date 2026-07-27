@@ -21,7 +21,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.NavType
+import androidx.navigation.navArgument
 import com.example.ui.add.AddCafeScreen
+import com.example.ui.detail.CafeDetailScreen
 import com.example.ui.home.HomeScreen
 import com.example.ui.locations.LocationsScreen
 import com.example.ui.profile.ProfileScreen
@@ -32,6 +35,7 @@ const val ROUTE_LOCATIONS = "locations"
 const val ROUTE_STATS = "stats"
 const val ROUTE_PROFILE = "profile"
 const val ROUTE_ADD_CAFE = "add_cafe"
+const val ROUTE_CAFE_DETAIL = "cafe_detail/{cafeId}"
 
 data class BottomNavItem(val name: String, val route: String, val icon: ImageVector)
 
@@ -85,7 +89,10 @@ fun AppNavigation() {
             modifier = Modifier.padding(innerPadding)
         ) {
             composable(ROUTE_HOME) {
-                HomeScreen(onAddClick = { navController.navigate(ROUTE_ADD_CAFE) })
+                HomeScreen(
+                    onAddClick = { navController.navigate(ROUTE_ADD_CAFE) },
+                    onCafeClick = { cafeId -> navController.navigate("cafe_detail/$cafeId") }
+                )
             }
             composable(ROUTE_LOCATIONS) {
                 LocationsScreen()
@@ -98,6 +105,16 @@ fun AppNavigation() {
             }
             composable(ROUTE_ADD_CAFE) {
                 AddCafeScreen(onBack = { navController.popBackStack() })
+            }
+            composable(
+                route = ROUTE_CAFE_DETAIL,
+                arguments = listOf(navArgument("cafeId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val cafeId = backStackEntry.arguments?.getString("cafeId") ?: ""
+                CafeDetailScreen(
+                    cafeId = cafeId,
+                    onBack = { navController.popBackStack() }
+                )
             }
         }
     }
