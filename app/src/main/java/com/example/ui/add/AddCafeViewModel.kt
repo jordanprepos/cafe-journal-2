@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
+import com.google.firebase.Timestamp
+
 class AddCafeViewModel : ViewModel() {
     private val repository = CafeRepository()
 
@@ -21,14 +23,31 @@ class AddCafeViewModel : ViewModel() {
     private val _saveSuccess = MutableStateFlow(false)
     val saveSuccess: StateFlow<Boolean> = _saveSuccess.asStateFlow()
 
+    private val _loadedExperience = MutableStateFlow<CafeExperience?>(null)
+    val loadedExperience: StateFlow<CafeExperience?> = _loadedExperience.asStateFlow()
+
+    fun loadExperience(cafeId: String) {
+        if (cafeId.isBlank()) return
+        viewModelScope.launch {
+            repository.getExperiences().collect { list ->
+                val found = list.find { it.id == cafeId }
+                if (found != null) {
+                    _loadedExperience.value = found
+                }
+            }
+        }
+    }
+
     fun saveExperience(
+        id: String = "",
         cafeName: String,
         location: String,
         rating: Float,
         coffeeRecommendation: String,
         priceRange: String,
         facilitiesTags: List<String>,
-        notes: String
+        notes: String,
+        timestamp: Timestamp? = null
     ) {
         if (cafeName.isBlank() || location.isBlank()) {
             _saveError.value = "Cafe name and location are required."
@@ -39,16 +58,18 @@ class AddCafeViewModel : ViewModel() {
             _saveError.value = null
             
             val experience = CafeExperience(
+                id = id,
                 cafeName = cafeName.trim(),
                 location = location.trim(),
                 rating = rating,
                 coffeeRecommendation = coffeeRecommendation.trim(),
                 priceRange = priceRange,
                 facilitiesTags = facilitiesTags,
-                notes = notes.trim()
+                notes = notes.trim(),
+                timestamp = timestamp ?: Timestamp.now()
             )
 
-            val result = repository.addExperience(experience)
+            val result = repository.saveExperience(experience)
             if (result.isSuccess) {
                 _saveSuccess.value = true
             } else {

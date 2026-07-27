@@ -48,15 +48,23 @@ class CafeRepository {
         awaitClose { subscription.remove() }
     }
 
-    suspend fun addExperience(experience: CafeExperience): Result<Unit> {
+    suspend fun saveExperience(experience: CafeExperience): Result<Unit> {
         return try {
             if (collection == null) {
                 return Result.failure(Exception("Firebase not configured. Please add google-services.json"))
             }
-            collection.add(experience).await()
+            if (experience.id.isBlank()) {
+                collection.add(experience).await()
+            } else {
+                collection.document(experience.id).set(experience).await()
+            }
             Result.success(Unit)
         } catch (e: Exception) {
             Result.failure(e)
         }
+    }
+
+    suspend fun addExperience(experience: CafeExperience): Result<Unit> {
+        return saveExperience(experience)
     }
 }

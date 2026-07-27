@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.CalendarToday
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.EditNote
 import androidx.compose.material.icons.outlined.LocalCafe
 import androidx.compose.material.icons.outlined.Map
@@ -48,6 +49,7 @@ import java.util.Locale
 fun CafeDetailScreen(
     cafeId: String,
     onBack: () -> Unit,
+    onEditClick: (String) -> Unit = {},
     viewModel: CafeDetailViewModel = viewModel(factory = CafeDetailViewModelFactory(cafeId))
 ) {
     val experience by viewModel.experience.collectAsState()
@@ -72,12 +74,12 @@ fun CafeDetailScreen(
                     experience?.let { exp ->
                         IconButton(
                             onClick = {
-                                MapUtils.openGoogleMaps(context, exp.cafeName, exp.location)
+                                onEditClick(exp.id)
                             }
                         ) {
                             Icon(
-                                Icons.Default.Map,
-                                contentDescription = "Open in Google Maps",
+                                Icons.Outlined.Edit,
+                                contentDescription = "Edit Café Entry",
                                 tint = MaterialTheme.colorScheme.primary
                             )
                         }

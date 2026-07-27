@@ -36,6 +36,7 @@ const val ROUTE_STATS = "stats"
 const val ROUTE_PROFILE = "profile"
 const val ROUTE_ADD_CAFE = "add_cafe"
 const val ROUTE_CAFE_DETAIL = "cafe_detail/{cafeId}"
+const val ROUTE_EDIT_CAFE = "edit_cafe/{cafeId}"
 
 data class BottomNavItem(val name: String, val route: String, val icon: ImageVector)
 
@@ -115,6 +116,17 @@ fun AppNavigation() {
                 val cafeId = backStackEntry.arguments?.getString("cafeId") ?: ""
                 CafeDetailScreen(
                     cafeId = cafeId,
+                    onBack = { navController.popBackStack() },
+                    onEditClick = { editId -> navController.navigate("edit_cafe/$editId") }
+                )
+            }
+            composable(
+                route = ROUTE_EDIT_CAFE,
+                arguments = listOf(navArgument("cafeId") { type = NavType.StringType })
+            ) { backStackEntry ->
+                val editId = backStackEntry.arguments?.getString("cafeId") ?: ""
+                AddCafeScreen(
+                    cafeId = editId,
                     onBack = { navController.popBackStack() }
                 )
             }

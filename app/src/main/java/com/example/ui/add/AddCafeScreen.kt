@@ -47,12 +47,14 @@ data class Facility(val key: String, val label: String, val icon: ImageVector)
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddCafeScreen(
+    cafeId: String? = null,
     onBack: () -> Unit,
     viewModel: AddCafeViewModel = viewModel()
 ) {
     val isSaving by viewModel.isSaving.collectAsState()
     val saveSuccess by viewModel.saveSuccess.collectAsState()
     val saveError by viewModel.saveError.collectAsState()
+    val loadedExperience by viewModel.loadedExperience.collectAsState()
 
     var cafeName by remember { mutableStateOf("") }
     var location by remember { mutableStateOf("") }
@@ -86,6 +88,29 @@ fun AddCafeScreen(
 
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
+
+    LaunchedEffect(cafeId) {
+        if (!cafeId.isNullOrBlank()) {
+            viewModel.loadExperience(cafeId)
+        }
+    }
+
+    LaunchedEffect(loadedExperience) {
+        loadedExperience?.let { exp ->
+            cafeName = exp.cafeName
+            location = exp.location
+            rating = exp.rating
+            coffeeRecommendation = exp.coffeeRecommendation
+            priceRange = exp.priceRange
+            notes = exp.notes
+
+            val knownFacilityLabels = facilityOptions.map { it.label }.toSet()
+            selectedFacilities = exp.facilitiesTags.filter { it in knownFacilityLabels }.toSet()
+            val extraTags = exp.facilitiesTags.filter { it !in knownFacilityLabels }.toSet()
+            selectedTags = extraTags
+            customTags = (extraTags - predefinedTags.toSet()).toList()
+        }
+    }
 
     LaunchedEffect(saveSuccess) {
         if (saveSuccess) {
@@ -140,7 +165,7 @@ fun AddCafeScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
-                title = { Text("New Café Entry", fontWeight = FontWeight.SemiBold) },
+                title = { Text(if (cafeId.isNullOrBlank()) "New Café Entry" else "Edit Café Entry", fontWeight = FontWeight.SemiBold) },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
@@ -399,7 +424,15 @@ fun AddCafeScreen(
                 onClick = {
                     val tags = selectedTags.toList() + selectedFacilities.toList()
                     viewModel.saveExperience(
-                        cafeName, location, rating, coffeeRecommendation, priceRange, tags, notes
+                        id = loadedExperience?.id ?: "",
+                        cafeName = cafeName,
+                        location = location,
+                        rating = rating,
+                        coffeeRecommendation = coffeeRecommendation,
+                        priceRange = priceRange,
+                        facilitiesTags = tags,
+                        notes = notes,
+                        timestamp = loadedExperience?.timestamp
                     )
                 },
                 enabled = !isSaving && cafeName.isNotBlank() && location.isNotBlank(),
@@ -410,7 +443,7 @@ fun AddCafeScreen(
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
             ) {
                 Text(
-                    text = if (isSaving) "Saving..." else "Save Entry",
+                    text = if (isSaving) "Saving..." else if (cafeId.isNullOrBlank()) "Save Entry" else "Update Entry",
                     fontWeight = FontWeight.Bold,
                     style = MaterialTheme.typography.titleMedium
                 )
