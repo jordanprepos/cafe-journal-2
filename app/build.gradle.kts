@@ -7,8 +7,6 @@ plugins {
   alias(libs.plugins.roborazzi)
   alias(libs.plugins.secrets)
   alias(libs.plugins.google.services)
-  id("com.android.application")
-  id("com.google.gms.google-services")
 }
 
 android {
@@ -16,7 +14,7 @@ android {
   compileSdk { version = release(36) { minorApiLevel = 1 } }
 
   defaultConfig {
-    applicationId = "com.aistudio.cafejournal.xqzvw"
+    applicationId = "com.project.coffee.journal2"
     minSdk = 24
     targetSdk = 36
     versionCode = 1

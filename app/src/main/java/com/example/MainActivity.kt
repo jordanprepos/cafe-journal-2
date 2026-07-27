@@ -12,10 +12,17 @@ import com.example.ui.navigation.AppNavigation
 import com.example.ui.profile.ProfileViewModel
 import com.example.ui.profile.ProfileViewModelFactory
 import com.example.ui.theme.AppTheme
+import com.google.firebase.analytics.FirebaseAnalytics
 
 class MainActivity : ComponentActivity() {
+  private lateinit var firebaseAnalytics: FirebaseAnalytics
+
   override fun onCreate(savedInstanceState: Bundle?) {
     super.onCreate(savedInstanceState)
+    
+    // Initialize Firebase Analytics
+    firebaseAnalytics = FirebaseAnalytics.getInstance(this)
+    
     enableEdgeToEdge()
     setContent {
       val viewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(this))
