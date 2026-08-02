@@ -24,7 +24,8 @@ fun ExperiencePhotoPlaceholder(
     index: Int = 0,
     modifier: Modifier = Modifier
 ) {
-    val bgColor = PhotoTintColors[index % PhotoTintColors.size]
+    val safeIndex = ((index % PhotoTintColors.size) + PhotoTintColors.size) % PhotoTintColors.size
+    val bgColor = PhotoTintColors[safeIndex]
     Box(
         modifier = modifier.background(bgColor)
     ) {
