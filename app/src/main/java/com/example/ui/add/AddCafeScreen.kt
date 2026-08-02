@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +27,7 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
@@ -46,6 +48,28 @@ val ALL_FACILITY_TAGS = listOf(
     "Laptop Friendly", "Open Late", "Card / QRIS", "Halal",
     "Full Food Menu", "Wheelchair Accessible"
 )
+
+val ALL_VIBE_TAGS = listOf(
+    "Cozy", "Minimalist", "Industrial", "Rustic",
+    "Aesthetic", "Quiet", "Lively", "Spacious",
+    "Great View", "Live Music"
+)
+
+fun getVibeIcon(tag: String): ImageVector? {
+    return when (tag) {
+        "Cozy" -> Icons.Outlined.Coffee
+        "Minimalist" -> Icons.Outlined.CropFree
+        "Industrial" -> Icons.Outlined.Architecture
+        "Rustic" -> Icons.Outlined.Cabin
+        "Aesthetic" -> Icons.Outlined.AutoAwesome
+        "Quiet" -> Icons.Outlined.VolumeOff
+        "Lively" -> Icons.Outlined.Celebration
+        "Spacious" -> Icons.Outlined.OpenInFull
+        "Great View" -> Icons.Outlined.Landscape
+        "Live Music" -> Icons.Outlined.MusicNote
+        else -> null
+    }
+}
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -445,7 +469,7 @@ fun AddCafeScreen(
                     ) {
                         ALL_FACILITY_TAGS.forEach { tag ->
                             val isSelected = selectedTags.contains(tag)
-                            val tagBg = if (isSelected) (if (isDark) Color(0xFFE0A891) else Color(0xFF2E241E)) else (if (isDark) Color(0xFF2C221D) else Color(0xFFEBE6DF))
+                            val tagBg = if (isSelected) (if (isDark) Color(0xFFF1D1C3) else Color(0xFF2E241E)) else (if (isDark) Color(0xFF2C221D) else Color(0xFFEBE6DF))
                             val tagContent = if (isSelected) (if (isDark) Color(0xFF231A16) else Color(0xFFF8F5F0)) else textColor
                             Surface(
                                 onClick = {
@@ -458,10 +482,55 @@ fun AddCafeScreen(
                                 Text(
                                     text = tag,
                                     fontFamily = DMSansFontFamily,
-                                    fontWeight = FontWeight.Medium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
                                     fontSize = 12.5.sp,
-                                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 8.dp)
+                                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 8.dp)
                                 )
+                            }
+                        }
+                    }
+                }
+
+                // VIBE
+                FormField(label = "VIBE", subtextColor = subtextColor) {
+                    FlowRow(
+                        horizontalArrangement = Arrangement.spacedBy(7.dp),
+                        verticalArrangement = Arrangement.spacedBy(7.dp),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        ALL_VIBE_TAGS.forEach { tag ->
+                            val isSelected = selectedTags.contains(tag)
+                            val tagBg = if (isSelected) (if (isDark) Color(0xFFF1D1C3) else Color(0xFF2E241E)) else (if (isDark) Color(0xFF2C221D) else Color(0xFFEBE6DF))
+                            val tagContent = if (isSelected) (if (isDark) Color(0xFF231A16) else Color(0xFFF8F5F0)) else textColor
+                            val vibeIcon = getVibeIcon(tag)
+                            Surface(
+                                onClick = {
+                                    selectedTags = if (isSelected) selectedTags - tag else selectedTags + tag
+                                },
+                                shape = RoundedCornerShape(999.dp),
+                                color = tagBg,
+                                contentColor = tagContent
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 7.5.dp)
+                                ) {
+                                    if (vibeIcon != null) {
+                                        Icon(
+                                            imageVector = vibeIcon,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(15.dp),
+                                            tint = tagContent
+                                        )
+                                        Spacer(modifier = Modifier.width(6.dp))
+                                    }
+                                    Text(
+                                        text = tag,
+                                        fontFamily = DMSansFontFamily,
+                                        fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                                        fontSize = 12.5.sp
+                                    )
+                                }
                             }
                         }
                     }

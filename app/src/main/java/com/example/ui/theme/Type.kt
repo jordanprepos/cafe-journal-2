@@ -2,31 +2,13 @@ package com.example.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
-import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.example.R
 
-val DMSansFontFamily = FontFamily(
-    Font(R.font.dm_sans, FontWeight.Normal),
-    Font(R.font.dm_sans, FontWeight.Medium),
-    Font(R.font.dm_sans, FontWeight.Bold)
-)
-
-val NewsreaderFontFamily = FontFamily(
-    Font(R.font.newsreader, FontWeight.Normal),
-    Font(R.font.newsreader, FontWeight.Medium),
-    Font(R.font.newsreader, FontWeight.SemiBold),
-    Font(R.font.newsreader_italic, FontWeight.Normal, FontStyle.Italic),
-    Font(R.font.newsreader_italic, FontWeight.Medium, FontStyle.Italic)
-)
-
-val IbmPlexMonoFontFamily = FontFamily(
-    Font(R.font.ibm_plex_mono, FontWeight.Normal),
-    Font(R.font.ibm_plex_mono_medium, FontWeight.Medium)
-)
+val DMSansFontFamily = FontFamily.SansSerif
+val NewsreaderFontFamily = FontFamily.Serif
+val IbmPlexMonoFontFamily = FontFamily.Monospace
 
 val Typography = Typography(
     headlineLarge = TextStyle(

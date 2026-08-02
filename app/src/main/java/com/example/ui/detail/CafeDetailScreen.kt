@@ -6,6 +6,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -17,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -33,6 +36,7 @@ import com.example.data.CafeExperience
 import com.example.data.ThemeRepository
 import com.example.ui.components.ExperiencePhotoPlaceholder
 import com.example.ui.theme.DMSansFontFamily
+import kotlinx.coroutines.launch
 import com.example.ui.theme.IbmPlexMonoFontFamily
 import com.example.ui.theme.NewsreaderFontFamily
 import com.example.util.MapUtils
@@ -83,20 +87,48 @@ fun CafeDetailScreen(
                 val detailPhotoList = remember(exp.photoUri) {
                     exp.photoUri.split(",").map { it.trim() }.filter { it.isNotBlank() }
                 }
-                val primaryPhoto = detailPhotoList.firstOrNull() ?: ""
+                val coroutineScope = rememberCoroutineScope()
+                val pagerState = rememberPagerState(pageCount = {
+                    if (detailPhotoList.isEmpty()) 1 else detailPhotoList.size
+                })
 
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(252.dp)
                 ) {
-                    if (primaryPhoto.isNotBlank()) {
-                        AsyncImage(
-                            model = primaryPhoto,
-                            contentDescription = exp.cafeName,
-                            contentScale = ContentScale.Crop,
+                    if (detailPhotoList.isNotEmpty()) {
+                        HorizontalPager(
+                            state = pagerState,
                             modifier = Modifier.fillMaxSize()
-                        )
+                        ) { page ->
+                            AsyncImage(
+                                model = detailPhotoList[page],
+                                contentDescription = "${exp.cafeName} photo ${page + 1}",
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier.fillMaxSize()
+                            )
+                        }
+
+                        // Photo Counter indicator badge if multiple photos exist
+                        if (detailPhotoList.size > 1) {
+                            Surface(
+                                color = Color.Black.copy(alpha = 0.65f),
+                                shape = RoundedCornerShape(12.dp),
+                                modifier = Modifier
+                                    .align(Alignment.BottomEnd)
+                                    .padding(end = 16.dp, bottom = 12.dp)
+                            ) {
+                                Text(
+                                    text = "${pagerState.currentPage + 1} / ${detailPhotoList.size}",
+                                    fontFamily = IbmPlexMonoFontFamily,
+                                    fontWeight = FontWeight.Medium,
+                                    color = Color.White,
+                                    fontSize = 11.sp,
+                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
+                                )
+                            }
+                        }
                     } else {
                         ExperiencePhotoPlaceholder(
                             index = exp.cafeName.hashCode(),
@@ -329,11 +361,22 @@ fun CafeDetailScreen(
                                 horizontalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 detailPhotoList.forEachIndexed { idx, pUri ->
+                                    val isSelected = (idx == pagerState.currentPage)
+                                    val borderModifier = if (isSelected) {
+                                        Modifier.border(2.5.dp, Color(0xFFC05A3B), RoundedCornerShape(12.dp))
+                                    } else Modifier
+
                                     Box(
                                         modifier = Modifier
                                             .size(110.dp)
                                             .clip(RoundedCornerShape(12.dp))
+                                            .then(borderModifier)
                                             .background(boxBgColor)
+                                            .clickable {
+                                                coroutineScope.launch {
+                                                    pagerState.animateScrollToPage(idx)
+                                                }
+                                            }
                                     ) {
                                         AsyncImage(
                                             model = pUri,
