@@ -23,7 +23,7 @@ class CafeRepository {
                     close(error)
                     return@addSnapshotListener
                 }
-                val experiences = snapshot?.toObjects(CafeExperience::class.java) ?: emptyList()
+                val experiences = snapshot?.documents?.mapNotNull { CafeExperience.fromDocument(it) } ?: emptyList()
                 trySend(experiences)
             }
         awaitClose { subscription.remove() }
@@ -41,7 +41,7 @@ class CafeRepository {
                     close(error)
                     return@addSnapshotListener
                 }
-                val experiences = snapshot?.toObjects(CafeExperience::class.java) ?: emptyList()
+                val experiences = snapshot?.documents?.mapNotNull { CafeExperience.fromDocument(it) } ?: emptyList()
                 val locations = experiences.map { it.location }.filter { it.isNotBlank() }.distinct()
                 trySend(locations)
             }

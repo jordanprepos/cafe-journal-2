@@ -19,6 +19,13 @@ class ProfileViewModel(private val themeRepository: ThemeRepository) : ViewModel
             initialValue = null
         )
 
+    val journalView: StateFlow<String> = themeRepository.journalView
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = "grid"
+        )
+
     fun setDarkMode(isDark: Boolean) {
         viewModelScope.launch {
             themeRepository.setDarkMode(isDark)

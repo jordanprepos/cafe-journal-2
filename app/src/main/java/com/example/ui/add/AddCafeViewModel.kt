@@ -3,12 +3,12 @@ package com.example.ui.add
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.data.CafeExperience
+import com.example.data.CafeRating
 import com.example.data.CafeRepository
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-
 import com.google.firebase.Timestamp
 
 class AddCafeViewModel : ViewModel() {
@@ -42,15 +42,16 @@ class AddCafeViewModel : ViewModel() {
         id: String = "",
         cafeName: String,
         location: String,
-        rating: Float,
+        rating: CafeRating,
         coffeeRecommendation: String,
         priceRange: String,
         facilitiesTags: List<String>,
         notes: String,
+        photoUri: String = "",
         timestamp: Timestamp? = null
     ) {
         if (cafeName.isBlank() || location.isBlank()) {
-            _saveError.value = "Cafe name and location are required."
+            _saveError.value = "Cafe name and area are required."
             return
         }
         viewModelScope.launch {
@@ -63,9 +64,10 @@ class AddCafeViewModel : ViewModel() {
                 location = location.trim(),
                 rating = rating,
                 coffeeRecommendation = coffeeRecommendation.trim(),
-                priceRange = priceRange,
+                priceRange = priceRange.trim(),
                 facilitiesTags = facilitiesTags,
                 notes = notes.trim(),
+                photoUri = photoUri.trim(),
                 timestamp = timestamp ?: Timestamp.now()
             )
 

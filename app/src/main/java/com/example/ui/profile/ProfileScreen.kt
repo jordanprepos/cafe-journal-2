@@ -1,141 +1,267 @@
 package com.example.ui.profile
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.ui.theme.DMSansFontFamily
+import com.example.ui.theme.IbmPlexMonoFontFamily
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileScreen(
+    onWrappedClick: () -> Unit = {},
     viewModel: ProfileViewModel = viewModel(factory = ProfileViewModelFactory(LocalContext.current))
 ) {
-    val isDarkMode by viewModel.isDarkMode.collectAsState()
-    val context = LocalContext.current
-    val currentIsDark = isDarkMode ?: androidx.compose.foundation.isSystemInDarkTheme()
+    val isDarkModeState by viewModel.isDarkMode.collectAsState()
+    val journalView by viewModel.journalView.collectAsState()
+    val systemDark = isSystemInDarkTheme()
+    val isDark = isDarkModeState ?: systemDark
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { 
-                    Column {
-                        Text("ACCOUNT", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        Text("Profile", style = MaterialTheme.typography.headlineLarge)
-                    }
-                }
-            )
-        }
-    ) { padding ->
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFFF8F5F0)
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+                .padding(top = 12.dp)
         ) {
-            Spacer(modifier = Modifier.height(32.dp))
-            Box(
+            // Header
+            Column(
                 modifier = Modifier
-                    .size(80.dp)
-                    .background(MaterialTheme.colorScheme.primary, CircleShape),
-                contentAlignment = Alignment.Center
+                    .fillMaxWidth()
+                    .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
                 Text(
-                    text = "J",
-                    style = MaterialTheme.typography.headlineLarge,
-                    color = MaterialTheme.colorScheme.onPrimary
+                    text = "ACCOUNT",
+                    fontFamily = IbmPlexMonoFontFamily,
+                    fontWeight = FontWeight.Medium,
+                    fontSize = 10.sp,
+                    letterSpacing = 1.4.sp,
+                    color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                )
+                Text(
+                    text = "Profile",
+                    fontFamily = DMSansFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 27.sp,
+                    lineHeight = 30.sp,
+                    letterSpacing = (-0.54).sp,
+                    color = Color(0xFF2E241E),
+                    modifier = Modifier.padding(top = 3.dp)
                 )
             }
-            Spacer(modifier = Modifier.height(16.dp))
-            Text(
-                text = "Jordan",
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold
-            )
-            Text(
-                text = "jordan@example.com",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
 
-            Spacer(modifier = Modifier.height(48.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primary),
-                shape = RoundedCornerShape(12.dp)
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 96.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
             ) {
-                Row(
+                // Avatar Circle (80.dp)
+                Box(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column {
-                        Text("2025 WRAPPED", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onPrimary)
-                        Text(
-                            text = "View your recap",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onPrimary,
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-                    Icon(
-                        Icons.AutoMirrored.Filled.ArrowForward,
-                        contentDescription = "View Recap",
-                        tint = MaterialTheme.colorScheme.onPrimary
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                        .size(80.dp)
+                        .background(Color(0xFFC05A3B), CircleShape),
+                    contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = "Dark Mode",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                    Switch(
-                        checked = currentIsDark,
-                        onCheckedChange = { viewModel.setDarkMode(it) }
+                        text = "J",
+                        fontFamily = DMSansFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 30.sp,
+                        color = Color.White
                     )
                 }
-            }
 
-            Spacer(modifier = Modifier.height(16.dp))
+                // Name & Subtitle
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(2.dp),
+                    modifier = Modifier.padding(bottom = 10.dp)
+                ) {
+                    Text(
+                        text = "Jordan",
+                        fontFamily = DMSansFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 19.sp,
+                        color = Color(0xFF2E241E)
+                    )
+                    Text(
+                        text = "Private journal · since Mar 2025",
+                        fontFamily = DMSansFontFamily,
+                        fontWeight = FontWeight.Normal,
+                        fontSize = 13.sp,
+                        color = Color(0xFF2E241E).copy(alpha = 0.5f)
+                    )
+                }
 
-            OutlinedButton(
-                onClick = { /* Log out */ },
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(12.dp)
-            ) {
-                Text("Log out", color = MaterialTheme.colorScheme.primary)
+                // 2026 WRAPPED CARD
+                Card(
+                    onClick = onWrappedClick,
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFC05A3B)),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column {
+                            Text(
+                                text = "2026 WRAPPED",
+                                fontFamily = IbmPlexMonoFontFamily,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 10.sp,
+                                letterSpacing = 1.4.sp,
+                                color = Color.White.copy(alpha = 0.75f)
+                            )
+                            Text(
+                                text = "View your recap",
+                                fontFamily = DMSansFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 16.sp,
+                                color = Color.White,
+                                modifier = Modifier.padding(top = 3.dp)
+                            )
+                        }
+                        Icon(
+                            Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                            contentDescription = "View Recap",
+                            tint = Color.White,
+                            modifier = Modifier.size(24.dp)
+                        )
+                    }
+                }
+
+                // Settings Card
+                Card(
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Column {
+                        // Row 1: Dark Mode Switch
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 15.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Dark mode",
+                                fontFamily = DMSansFontFamily,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 14.5.sp,
+                                color = Color(0xFF2E241E)
+                            )
+                            Switch(
+                                checked = isDark,
+                                onCheckedChange = { viewModel.setDarkMode(it) },
+                                colors = SwitchDefaults.colors(
+                                    checkedThumbColor = Color.White,
+                                    checkedTrackColor = Color(0xFFC05A3B),
+                                    uncheckedThumbColor = Color.White,
+                                    uncheckedTrackColor = Color(0xFFDED7CD)
+                                )
+                            )
+                        }
+                        HorizontalDivider(color = Color(0xFFEFEAE2), thickness = 1.dp)
+
+                        // Row 2: Default journal view
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 15.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Default journal view",
+                                fontFamily = DMSansFontFamily,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 14.5.sp,
+                                color = Color(0xFF2E241E)
+                            )
+                            Text(
+                                text = journalView.replaceFirstChar { it.uppercase() },
+                                fontFamily = DMSansFontFamily,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 13.5.sp,
+                                color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                            )
+                        }
+                        HorizontalDivider(color = Color(0xFFEFEAE2), thickness = 1.dp)
+
+                        // Row 3: Export journal
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 15.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "Export journal",
+                                fontFamily = DMSansFontFamily,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 14.5.sp,
+                                color = Color(0xFF2E241E)
+                            )
+                            Text(
+                                text = "CSV",
+                                fontFamily = DMSansFontFamily,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 13.5.sp,
+                                color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                            )
+                        }
+                    }
+                }
+
+                // Log out button
+                OutlinedButton(
+                    onClick = { /* Handle logout */ },
+                    shape = RoundedCornerShape(14.dp),
+                    border = androidx.compose.foundation.BorderStroke(1.5.dp, Color(0xFFDED7CD)),
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFFC05A3B)),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(48.dp)
+                ) {
+                    Text(
+                        text = "Log out",
+                        fontFamily = DMSansFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 14.5.sp
+                    )
+                }
             }
         }
     }

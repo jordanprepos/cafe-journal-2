@@ -1,50 +1,40 @@
 package com.example.ui.add
 
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AddPhotoAlternate
-import androidx.compose.material.icons.outlined.CalendarToday
-import androidx.compose.material.icons.outlined.Coffee
-import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.Label
-import androidx.compose.material.icons.outlined.LocalCafe
-import androidx.compose.material.icons.outlined.Place
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.StarBorder
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.draw.drawWithContent
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.PathEffect
+import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
-import com.example.R
-import java.text.SimpleDateFormat
-import java.util.Date
-import androidx.compose.material.icons.outlined.*
-import androidx.compose.ui.graphics.vector.ImageVector
-import java.util.Locale
+import com.example.data.CafeRating
+import com.example.ui.theme.DMSansFontFamily
+import com.example.ui.theme.IbmPlexMonoFontFamily
+import com.example.ui.theme.NewsreaderFontFamily
 
-data class Facility(val key: String, val label: String, val icon: ImageVector)
+val ALL_FACILITY_TAGS = listOf(
+    "WiFi", "Power Outlets", "Parking", "Air Conditioning",
+    "Outdoor Seating", "Pet Friendly", "Restroom", "Prayer Room",
+    "Laptop Friendly", "Open Late", "Card / QRIS", "Halal",
+    "Full Food Menu", "Wheelchair Accessible"
+)
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun AddCafeScreen(
     cafeId: String? = null,
@@ -52,45 +42,26 @@ fun AddCafeScreen(
     viewModel: AddCafeViewModel = viewModel()
 ) {
     val isSaving by viewModel.isSaving.collectAsState()
-    val saveSuccess by viewModel.saveSuccess.collectAsState()
     val saveError by viewModel.saveError.collectAsState()
+    val saveSuccess by viewModel.saveSuccess.collectAsState()
     val loadedExperience by viewModel.loadedExperience.collectAsState()
 
     var cafeName by remember { mutableStateOf("") }
-    var location by remember { mutableStateOf("") }
-    var rating by remember { mutableFloatStateOf(5f) }
-    var coffeeRecommendation by remember { mutableStateOf("") }
-    var priceRange by remember { mutableStateOf("") }
+    var area by remember { mutableStateOf("") }
+    var price by remember { mutableStateOf("") }
+    var drink by remember { mutableStateOf("") }
+    var note by remember { mutableStateOf("") }
+    var coffeeRating by remember { mutableFloatStateOf(0f) }
+    var vibeRating by remember { mutableFloatStateOf(0f) }
+    var wifiRating by remember { mutableFloatStateOf(0f) }
+    var seatingRating by remember { mutableFloatStateOf(0f) }
     var selectedTags by remember { mutableStateOf(setOf<String>()) }
-    var customTags by remember { mutableStateOf(listOf<String>()) }
-    var showAddTagDialog by remember { mutableStateOf(false) }
-    var newTagText by remember { mutableStateOf("") }
-    var notes by remember { mutableStateOf("") }
+    var photoUri by remember { mutableStateOf("") }
 
-    var selectedFacilities by remember { mutableStateOf(setOf<String>()) }
-
-    val facilityOptions = listOf(
-        Facility("indoor", "Indoor", Icons.Outlined.Home),
-        Facility("outdoor", "Outdoor", Icons.Outlined.Park),
-        Facility("wifi", "Wi-Fi", Icons.Outlined.Wifi),
-        Facility("smoking_allowed", "Smoking/vape OK", Icons.Outlined.SmokingRooms),
-        Facility("power_outlets", "Power outlets", Icons.Outlined.ElectricalServices),
-        Facility("parking", "Parking", Icons.Outlined.LocalParking),
-        Facility("restroom", "Restroom", Icons.Outlined.Wc),
-        Facility("air_conditioning", "Air conditioning", Icons.Outlined.AcUnit),
-        Facility("pet_friendly", "Pet friendly", Icons.Outlined.Pets)
-    )
-
-    val predefinedTags = listOf("work-friendly", "cosy", "espresso bar")
-    val allTags = predefinedTags + customTags
-
-    val currentDate = remember { SimpleDateFormat("MMM dd, yyyy", Locale.getDefault()).format(Date()) }
-
-    val snackbarHostState = remember { SnackbarHostState() }
-    val scope = rememberCoroutineScope()
+    val isEdit = !cafeId.isNullOrBlank()
 
     LaunchedEffect(cafeId) {
-        if (!cafeId.isNullOrBlank()) {
+        if (isEdit && cafeId != null) {
             viewModel.loadExperience(cafeId)
         }
     }
@@ -98,17 +69,16 @@ fun AddCafeScreen(
     LaunchedEffect(loadedExperience) {
         loadedExperience?.let { exp ->
             cafeName = exp.cafeName
-            location = exp.location
-            rating = exp.rating
-            coffeeRecommendation = exp.coffeeRecommendation
-            priceRange = exp.priceRange
-            notes = exp.notes
-
-            val knownFacilityLabels = facilityOptions.map { it.label }.toSet()
-            selectedFacilities = exp.facilitiesTags.filter { it in knownFacilityLabels }.toSet()
-            val extraTags = exp.facilitiesTags.filter { it !in knownFacilityLabels }.toSet()
-            selectedTags = extraTags
-            customTags = (extraTags - predefinedTags.toSet()).toList()
+            area = exp.location
+            price = exp.priceRange
+            drink = exp.coffeeRecommendation
+            note = exp.notes
+            coffeeRating = exp.rating.coffee
+            vibeRating = exp.rating.vibe
+            wifiRating = exp.rating.wifi
+            seatingRating = exp.rating.seating
+            selectedTags = exp.facilitiesTags.toSet()
+            photoUri = exp.photoUri
         }
     }
 
@@ -118,338 +88,368 @@ fun AddCafeScreen(
         }
     }
 
-    LaunchedEffect(saveError) {
-        saveError?.let { error ->
-            scope.launch {
-                snackbarHostState.showSnackbar(error)
-            }
-        }
-    }
-
-    if (showAddTagDialog) {
-        AlertDialog(
-            onDismissRequest = { showAddTagDialog = false },
-            title = { Text("Add Custom Tag") },
-            text = {
-                OutlinedTextField(
-                    value = newTagText,
-                    onValueChange = { newTagText = it },
-                    label = { Text("Tag Name") },
-                    singleLine = true
-                )
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        val tag = newTagText.trim().lowercase()
-                        if (tag.isNotEmpty() && !allTags.contains(tag)) {
-                            customTags = customTags + listOf(tag)
-                            selectedTags = selectedTags + tag
-                        }
-                        showAddTagDialog = false
-                        newTagText = ""
-                    }
-                ) {
-                    Text("Add")
-                }
-            },
-            dismissButton = {
-                TextButton(onClick = { showAddTagDialog = false }) {
-                    Text("Cancel")
-                }
-            }
-        )
-    }
-
-    Scaffold(
-        snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = { Text(if (cafeId.isNullOrBlank()) "New Café Entry" else "Edit Café Entry", fontWeight = FontWeight.SemiBold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
-                    }
-                }
-            )
-        }
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(horizontal = 24.dp, vertical = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            // Hero Photo placeholder
-            Box(
+    Surface(
+        modifier = Modifier.fillMaxSize(),
+        color = Color(0xFFF8F5F0)
+    ) {
+        Column(modifier = Modifier.fillMaxSize()) {
+            // Top Bar
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(220.dp)
-                    .clip(RoundedCornerShape(24.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .border(2.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(24.dp))
-                    .clickable { /* Handle image pick */ },
-                contentAlignment = Alignment.Center
+                    .background(Color(0xFFF8F5F0))
+                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center) {
-                    Box(
-                        modifier = Modifier
-                            .size(64.dp)
-                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(
-                            Icons.Default.AddPhotoAlternate, 
-                            contentDescription = "Add photos",
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            modifier = Modifier.size(32.dp)
+                Text(
+                    text = "Cancel",
+                    fontFamily = DMSansFontFamily,
+                    fontWeight = FontWeight.Normal,
+                    fontSize = 14.sp,
+                    color = Color(0xFF2E241E).copy(alpha = 0.55f),
+                    modifier = Modifier.clickable { onBack() }
+                )
+                Text(
+                    text = if (isEdit) "Edit entry" else "New entry",
+                    fontFamily = DMSansFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    color = Color(0xFF2E241E)
+                )
+                Text(
+                    text = "Save",
+                    fontFamily = DMSansFontFamily,
+                    fontWeight = FontWeight.SemiBold,
+                    fontSize = 14.sp,
+                    color = Color(0xFFC05A3B),
+                    modifier = Modifier.clickable(enabled = !isSaving) {
+                        viewModel.saveExperience(
+                            id = loadedExperience?.id ?: "",
+                            cafeName = cafeName,
+                            location = area,
+                            rating = CafeRating(coffeeRating, vibeRating, wifiRating, seatingRating),
+                            coffeeRecommendation = drink,
+                            priceRange = price,
+                            facilitiesTags = selectedTags.toList(),
+                            notes = note,
+                            photoUri = photoUri,
+                            timestamp = loadedExperience?.timestamp
                         )
                     }
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        "Upload a Photo", 
-                        style = MaterialTheme.typography.titleMedium, 
-                        color = MaterialTheme.colorScheme.onSurface,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                    Text(
-                        "Showcase the vibe or your drink", 
-                        style = MaterialTheme.typography.bodyMedium, 
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+            HorizontalDivider(color = Color(0xFFEBE6DF), thickness = 1.dp)
+
+            // Form
+            Column(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 20.dp, vertical = 16.dp),
+                verticalArrangement = Arrangement.spacedBy(18.dp)
+            ) {
+                // Photo well
+                val strokeColor = Color(0xFF2E241E).copy(alpha = 0.25f)
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(132.dp)
+                        .background(Color(0xFFEFEAE2), RoundedCornerShape(16.dp))
+                        .drawWithContent {
+                            drawContent()
+                            drawRoundRect(
+                                color = strokeColor,
+                                style = Stroke(
+                                    width = 3f,
+                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
+                                ),
+                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx())
+                            )
+                        }
+                        .clickable {
+                            // Photo URI picker could be added here
+                        },
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(width = 30.dp, height = 24.dp)
+                                .border(1.8.dp, Color(0xFF2E241E).copy(alpha = 0.4f), RoundedCornerShape(5.dp))
+                        )
+                        Text(
+                            text = "ADD A PHOTO",
+                            fontFamily = IbmPlexMonoFontFamily,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 11.sp,
+                            letterSpacing = 0.8.sp,
+                            color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                        )
+                    }
+                }
+
+                // CAFE NAME
+                FormField(label = "CAFE NAME") {
+                    CustomTextField(
+                        value = cafeName,
+                        onValueChange = { cafeName = it },
+                        placeholder = "e.g. Kopi Nako"
                     )
                 }
-            }
 
-            // Form Fields
-            OutlinedTextField(
-                value = cafeName,
-                onValueChange = { cafeName = it },
-                label = { Text("Café Name") },
-                leadingIcon = { Icon(Icons.Outlined.Coffee, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                placeholder = { Text("e.g. Matcha Symphony") }
-            )
-            
-            OutlinedTextField(
-                value = location,
-                onValueChange = { location = it },
-                label = { Text("Location") },
-                leadingIcon = { Icon(Icons.Outlined.Place, contentDescription = null) },
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                shape = RoundedCornerShape(16.dp),
-                placeholder = { Text("Neighborhood or Maps link") }
-            )
-            
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                elevation = CardDefaults.cardElevation(0.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                // AREA / PRICE Row
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("Overall Rating", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.primary)
-                    Spacer(modifier = Modifier.height(8.dp))
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        for (i in 1..5) {
-                            Icon(
-                                imageVector = if (i <= rating) Icons.Filled.Star else Icons.Outlined.StarBorder,
-                                contentDescription = "Star $i",
-                                tint = if (i <= rating) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
-                                modifier = Modifier
-                                    .size(48.dp)
-                                    .clickable { rating = i.toFloat() }
-                                    .padding(4.dp)
+                    Box(modifier = Modifier.weight(1f)) {
+                        FormField(label = "AREA") {
+                            CustomTextField(
+                                value = area,
+                                onValueChange = { area = it },
+                                placeholder = "Kemang"
+                            )
+                        }
+                    }
+                    Box(modifier = Modifier.weight(1f)) {
+                        FormField(label = "PRICE") {
+                            CustomTextField(
+                                value = price,
+                                onValueChange = { price = it },
+                                placeholder = "Rp 35K"
                             )
                         }
                     }
                 }
-            }
 
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-                OutlinedTextField(
-                    value = currentDate,
-                    onValueChange = {},
-                    label = { Text("Visited") },
-                    leadingIcon = { Icon(Icons.Outlined.CalendarToday, contentDescription = null) },
-                    modifier = Modifier.weight(1f),
-                    readOnly = true,
-                    shape = RoundedCornerShape(16.dp)
-                )
-                OutlinedTextField(
-                    value = coffeeRecommendation,
-                    onValueChange = { coffeeRecommendation = it },
-                    label = { Text("Best Drink") },
-                    leadingIcon = { Icon(Icons.Outlined.LocalCafe, contentDescription = null) },
-                    modifier = Modifier.weight(1.2f),
-                    shape = RoundedCornerShape(16.dp),
-                    placeholder = { Text("e.g. Iced Latte") }
-                )
-            }
+                // WHAT YOU DRANK
+                FormField(label = "WHAT YOU DRANK") {
+                    CustomTextField(
+                        value = drink,
+                        onValueChange = { drink = it },
+                        placeholder = "Flat white, oat"
+                    )
+                }
 
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                elevation = CardDefaults.cardElevation(0.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text("TAGS", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    @OptIn(ExperimentalLayoutApi::class)
+                // RATE IT
+                FormField(label = "RATE IT") {
+                    Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
+                        RatingDotsRow("Coffee", coffeeRating) { coffeeRating = it }
+                        RatingDotsRow("Vibe", vibeRating) { vibeRating = it }
+                        RatingDotsRow("WiFi", wifiRating) { wifiRating = it }
+                        RatingDotsRow("Seating", seatingRating) { seatingRating = it }
+                    }
+                }
+
+                // FACILITIES
+                FormField(label = "FACILITIES") {
                     FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(7.dp),
+                        verticalArrangement = Arrangement.spacedBy(7.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        allTags.forEach { tag ->
+                        ALL_FACILITY_TAGS.forEach { tag ->
                             val isSelected = selectedTags.contains(tag)
                             Surface(
-                                shape = RoundedCornerShape(50),
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.clickable {
-                                    selectedTags = if (isSelected) {
-                                        selectedTags - tag
-                                    } else {
-                                        selectedTags + tag
-                                    }
-                                }
+                                onClick = {
+                                    selectedTags = if (isSelected) selectedTags - tag else selectedTags + tag
+                                },
+                                shape = RoundedCornerShape(999.dp),
+                                color = if (isSelected) Color(0xFF2E241E) else Color(0xFFEBE6DF),
+                                contentColor = if (isSelected) Color(0xFFF8F5F0) else Color(0xFF50443D)
                             ) {
                                 Text(
-                                    text = if (isSelected) "$tag ✓" else tag,
-                                    color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                    style = MaterialTheme.typography.bodyMedium
+                                    text = tag,
+                                    fontFamily = DMSansFontFamily,
+                                    fontWeight = FontWeight.Medium,
+                                    fontSize = 12.5.sp,
+                                    modifier = Modifier.padding(horizontal = 13.dp, vertical = 8.dp)
                                 )
                             }
                         }
-                        
-                        Surface(
-                            shape = RoundedCornerShape(50),
-                            color = MaterialTheme.colorScheme.surfaceVariant,
-                            modifier = Modifier.clickable { showAddTagDialog = true }
-                        ) {
-                            Text(
-                                text = "+ new",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
                     }
                 }
-            }
-            
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)),
-                elevation = CardDefaults.cardElevation(0.dp)
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp)
-                ) {
-                    Text("FACILITIES", style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    Spacer(modifier = Modifier.height(12.dp))
-                    @OptIn(ExperimentalLayoutApi::class)
-                    FlowRow(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
+
+                // NOTES TO FUTURE YOU
+                FormField(label = "NOTES TO FUTURE YOU") {
+                    OutlinedTextField(
+                        value = note,
+                        onValueChange = { note = it },
+                        placeholder = {
+                            Text(
+                                "Who you were with, what the light was like, whether you'd go back.",
+                                fontFamily = NewsreaderFontFamily,
+                                fontStyle = FontStyle.Italic,
+                                fontSize = 15.sp,
+                                color = Color(0xFF2E241E).copy(alpha = 0.4f)
+                            )
+                        },
+                        textStyle = LocalTextStyle.current.copy(
+                            fontFamily = NewsreaderFontFamily,
+                            fontStyle = FontStyle.Italic,
+                            fontSize = 15.sp,
+                            color = Color(0xFF2E241E)
+                        ),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedContainerColor = Color.White,
+                            unfocusedContainerColor = Color.White,
+                            focusedBorderColor = Color(0xFFC05A3B),
+                            unfocusedBorderColor = Color(0xFFDED7CD)
+                        ),
+                        shape = RoundedCornerShape(12.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(104.dp)
+                    )
+                }
+
+                // Error Banner
+                if (saveError != null) {
+                    Surface(
+                        color = Color(0xFFFFDAD6),
+                        shape = RoundedCornerShape(10.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        facilityOptions.forEach { facility ->
-                            val isSelected = selectedFacilities.contains(facility.label)
-                            Surface(
-                                shape = RoundedCornerShape(50),
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceVariant,
-                                modifier = Modifier.clickable {
-                                    selectedFacilities = if (isSelected) {
-                                        selectedFacilities - facility.label
-                                    } else {
-                                        selectedFacilities + facility.label
-                                    }
-                                }
-                            ) {
-                                Row(
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Icon(
-                                        imageVector = facility.icon,
-                                        contentDescription = facility.label,
-                                        tint = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        modifier = Modifier.size(16.dp)
-                                    )
-                                    Spacer(modifier = Modifier.width(6.dp))
-                                    Text(
-                                        text = facility.label,
-                                        color = if (isSelected) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurfaceVariant,
-                                        style = MaterialTheme.typography.bodyMedium
-                                    )
-                                }
-                            }
-                        }
+                        Text(
+                            text = saveError!!,
+                            fontFamily = DMSansFontFamily,
+                            fontWeight = FontWeight.Normal,
+                            fontSize = 12.5.sp,
+                            color = Color(0xFFBA1A1A),
+                            modifier = Modifier.padding(horizontal = 13.dp, vertical = 10.dp)
+                        )
                     }
                 }
-            }
 
-            OutlinedTextField(
-                value = notes,
-                onValueChange = { notes = it },
-                label = { Text("Journal Notes") },
-                leadingIcon = { Icon(Icons.Outlined.Edit, contentDescription = null, modifier = Modifier.padding(bottom = 96.dp)) },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(140.dp),
-                maxLines = 5,
-                shape = RoundedCornerShape(16.dp),
-                placeholder = { Text("Write your thoughts about this place...") }
-            )
-            
-            Spacer(modifier = Modifier.height(16.dp))
-
-            Button(
-                onClick = {
-                    val tags = selectedTags.toList() + selectedFacilities.toList()
-                    viewModel.saveExperience(
-                        id = loadedExperience?.id ?: "",
-                        cafeName = cafeName,
-                        location = location,
-                        rating = rating,
-                        coffeeRecommendation = coffeeRecommendation,
-                        priceRange = priceRange,
-                        facilitiesTags = tags,
-                        notes = notes,
-                        timestamp = loadedExperience?.timestamp
+                // Save CTA
+                Button(
+                    onClick = {
+                        viewModel.saveExperience(
+                            id = loadedExperience?.id ?: "",
+                            cafeName = cafeName,
+                            location = area,
+                            rating = CafeRating(coffeeRating, vibeRating, wifiRating, seatingRating),
+                            coffeeRecommendation = drink,
+                            priceRange = price,
+                            facilitiesTags = selectedTags.toList(),
+                            notes = note,
+                            photoUri = photoUri,
+                            timestamp = loadedExperience?.timestamp
+                        )
+                    },
+                    enabled = !isSaving,
+                    shape = RoundedCornerShape(14.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFC05A3B),
+                        contentColor = Color.White
+                    ),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp)
+                ) {
+                    Text(
+                        text = if (isSaving) "Saving..." else if (isEdit) "Save changes" else "Save to journal",
+                        fontFamily = DMSansFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 15.sp
                     )
-                },
-                enabled = !isSaving && cafeName.isNotBlank() && location.isNotBlank(),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(32.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary)
-            ) {
-                Text(
-                    text = if (isSaving) "Saving..." else if (cafeId.isNullOrBlank()) "Save Entry" else "Update Entry",
-                    fontWeight = FontWeight.Bold,
-                    style = MaterialTheme.typography.titleMedium
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
+        }
+    }
+}
+
+@Composable
+fun FormField(
+    label: String,
+    content: @Composable () -> Unit
+) {
+    Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
+        Text(
+            text = label,
+            fontFamily = IbmPlexMonoFontFamily,
+            fontWeight = FontWeight.Medium,
+            fontSize = 10.sp,
+            letterSpacing = 1.4.sp,
+            color = Color(0xFF2E241E).copy(alpha = 0.45f)
+        )
+        content()
+    }
+}
+
+@Composable
+fun CustomTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    placeholder: String
+) {
+    OutlinedTextField(
+        value = value,
+        onValueChange = onValueChange,
+        placeholder = {
+            Text(
+                placeholder,
+                fontFamily = DMSansFontFamily,
+                fontSize = 15.sp,
+                color = Color(0xFF2E241E).copy(alpha = 0.4f)
+            )
+        },
+        singleLine = true,
+        textStyle = LocalTextStyle.current.copy(
+            fontFamily = DMSansFontFamily,
+            fontSize = 15.sp,
+            color = Color(0xFF2E241E)
+        ),
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedContainerColor = Color.White,
+            unfocusedContainerColor = Color.White,
+            focusedBorderColor = Color(0xFFC05A3B),
+            unfocusedBorderColor = Color(0xFFDED7CD)
+        ),
+        shape = RoundedCornerShape(12.dp),
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(50.dp)
+    )
+}
+
+@Composable
+fun RatingDotsRow(
+    label: String,
+    ratingValue: Float,
+    onRatingChange: (Float) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Text(
+            text = label,
+            fontFamily = DMSansFontFamily,
+            fontWeight = FontWeight.Normal,
+            fontSize = 14.sp,
+            color = Color(0xFF2E241E)
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
+            (1..5).forEach { dotIndex ->
+                val isFilled = ratingValue >= dotIndex
+                Box(
+                    modifier = Modifier
+                        .size(22.dp)
+                        .background(
+                            color = if (isFilled) Color(0xFFC05A3B) else Color(0xFFEBE6DF),
+                            shape = CircleShape
+                        )
+                        .clickable { onRatingChange(dotIndex.toFloat()) }
                 )
             }
-
-            Spacer(modifier = Modifier.height(24.dp))
         }
     }
 }
