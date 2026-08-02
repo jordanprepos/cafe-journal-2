@@ -3,6 +3,7 @@ package com.example.ui.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -79,14 +80,19 @@ fun CafeDetailScreen(
                     .verticalScroll(rememberScrollState())
             ) {
                 // Hero Photo (252.dp tall)
+                val detailPhotoList = remember(exp.photoUri) {
+                    exp.photoUri.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                }
+                val primaryPhoto = detailPhotoList.firstOrNull() ?: ""
+
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(252.dp)
                 ) {
-                    if (exp.photoUri.isNotBlank()) {
+                    if (primaryPhoto.isNotBlank()) {
                         AsyncImage(
-                            model = exp.photoUri,
+                            model = primaryPhoto,
                             contentDescription = exp.cafeName,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier.fillMaxSize()
@@ -302,6 +308,42 @@ fun CafeDetailScreen(
                                 lineHeight = 25.sp,
                                 color = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.9f) else Color(0xFF2E241E).copy(alpha = 0.85f)
                             )
+                        }
+                    }
+
+                    // PHOTO GALLERY
+                    if (detailPhotoList.size > 1) {
+                        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            Text(
+                                text = "PHOTOS (${detailPhotoList.size})",
+                                fontFamily = IbmPlexMonoFontFamily,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 10.sp,
+                                letterSpacing = 1.4.sp,
+                                color = subtextColor
+                            )
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .horizontalScroll(rememberScrollState()),
+                                horizontalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                detailPhotoList.forEachIndexed { idx, pUri ->
+                                    Box(
+                                        modifier = Modifier
+                                            .size(110.dp)
+                                            .clip(RoundedCornerShape(12.dp))
+                                            .background(boxBgColor)
+                                    ) {
+                                        AsyncImage(
+                                            model = pUri,
+                                            contentDescription = "Cafe Photo ${idx + 1}",
+                                            contentScale = ContentScale.Crop,
+                                            modifier = Modifier.fillMaxSize()
+                                        )
+                                    }
+                                }
+                            }
                         }
                     }
 

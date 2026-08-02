@@ -1,14 +1,22 @@
 package com.example.ui.add
 
+import android.content.Intent
+import android.net.Uri
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,12 +26,14 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil.compose.AsyncImage
 import com.example.data.CafeRating
 import com.example.data.ThemeRepository
 import com.example.ui.theme.DMSansFontFamily
@@ -75,6 +85,27 @@ fun AddCafeScreen(
     var selectedTags by remember { mutableStateOf(setOf<String>()) }
     var photoUri by remember { mutableStateOf("") }
 
+    val photoPickerLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetMultipleContents()
+    ) { uris: List<Uri> ->
+        if (uris.isNotEmpty()) {
+            val uriStrings = uris.map { uri ->
+                try {
+                    context.contentResolver.takePersistableUriPermission(
+                        uri,
+                        Intent.FLAG_GRANT_READ_URI_PERMISSION
+                    )
+                } catch (e: Exception) {
+                    // Ignore non-persistable URI errors
+                }
+                uri.toString()
+            }
+            val existingList = photoUri.split(",").map { it.trim() }.filter { it.isNotBlank() }
+            val newList = (existingList + uriStrings).distinct()
+            photoUri = newList.joinToString(",")
+        }
+    }
+
     val isEdit = !cafeId.isNullOrBlank()
 
     LaunchedEffect(cafeId) {
@@ -115,7 +146,7 @@ fun AddCafeScreen(
                 modifier = Modifier
                     .fillMaxWidth()
                     .background(bgColor)
-                    .padding(horizontal = 20.dp, vertical = 12.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 4.dp, bottom = 8.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
@@ -166,46 +197,169 @@ fun AddCafeScreen(
                     .padding(horizontal = 20.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
-                // Photo well
+                // Photo section
                 val strokeColor = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.3f) else Color(0xFF2E241E).copy(alpha = 0.25f)
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(132.dp)
-                        .background(photoWellBg, RoundedCornerShape(16.dp))
-                        .drawWithContent {
-                            drawContent()
-                            drawRoundRect(
-                                color = strokeColor,
-                                style = Stroke(
-                                    width = 3f,
-                                    pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
-                                ),
-                                cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx())
+                val photoList = remember(photoUri) {
+                    photoUri.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                }
+
+                if (photoList.isEmpty()) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(132.dp)
+                            .background(photoWellBg, RoundedCornerShape(16.dp))
+                            .drawWithContent {
+                                drawContent()
+                                drawRoundRect(
+                                    color = strokeColor,
+                                    style = Stroke(
+                                        width = 3f,
+                                        pathEffect = PathEffect.dashPathEffect(floatArrayOf(12f, 8f), 0f)
+                                    ),
+                                    cornerRadius = androidx.compose.ui.geometry.CornerRadius(16.dp.toPx())
+                                )
+                            }
+                            .clickable {
+                                photoPickerLauncher.launch("image/*")
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(6.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(width = 30.dp, height = 24.dp)
+                                    .border(1.8.dp, strokeColor, RoundedCornerShape(5.dp))
+                            )
+                            Text(
+                                text = "ADD PHOTOS",
+                                fontFamily = IbmPlexMonoFontFamily,
+                                fontWeight = FontWeight.Normal,
+                                fontSize = 11.sp,
+                                letterSpacing = 0.8.sp,
+                                color = subtextColor
+                            )
+                            Text(
+                                text = "Tap to choose images from device",
+                                fontFamily = DMSansFontFamily,
+                                fontSize = 11.sp,
+                                color = subtextColor.copy(alpha = 0.7f)
                             )
                         }
-                        .clickable {
-                            // Photo URI picker could be added here
-                        },
-                    contentAlignment = Alignment.Center
-                ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(6.dp)
-                    ) {
-                        Box(
+                    }
+                } else {
+                    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                text = "PHOTOS (${photoList.size})",
+                                fontFamily = IbmPlexMonoFontFamily,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 10.sp,
+                                letterSpacing = 1.4.sp,
+                                color = subtextColor
+                            )
+                            Text(
+                                text = "+ Add More",
+                                fontFamily = DMSansFontFamily,
+                                fontWeight = FontWeight.Medium,
+                                fontSize = 12.sp,
+                                color = Color(0xFFC05A3B),
+                                modifier = Modifier.clickable {
+                                    photoPickerLauncher.launch("image/*")
+                                }
+                            )
+                        }
+
+                        Row(
                             modifier = Modifier
-                                .size(width = 30.dp, height = 24.dp)
-                                .border(1.8.dp, strokeColor, RoundedCornerShape(5.dp))
-                        )
-                        Text(
-                            text = "ADD A PHOTO",
-                            fontFamily = IbmPlexMonoFontFamily,
-                            fontWeight = FontWeight.Normal,
-                            fontSize = 11.sp,
-                            letterSpacing = 0.8.sp,
-                            color = subtextColor
-                        )
+                                .fillMaxWidth()
+                                .horizontalScroll(rememberScrollState()),
+                            horizontalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            photoList.forEachIndexed { index, uriStr ->
+                                Box(
+                                    modifier = Modifier
+                                        .size(110.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(photoWellBg)
+                                ) {
+                                    AsyncImage(
+                                        model = uriStr,
+                                        contentDescription = "Selected photo ${index + 1}",
+                                        contentScale = ContentScale.Crop,
+                                        modifier = Modifier.fillMaxSize()
+                                    )
+
+                                    // Remove photo button
+                                    Surface(
+                                        onClick = {
+                                            val updated = photoList.filterIndexed { i, _ -> i != index }
+                                            photoUri = updated.joinToString(",")
+                                        },
+                                        shape = CircleShape,
+                                        color = Color.Black.copy(alpha = 0.65f),
+                                        modifier = Modifier
+                                            .padding(6.dp)
+                                            .size(24.dp)
+                                            .align(Alignment.TopEnd)
+                                    ) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = "Remove photo",
+                                            tint = Color.White,
+                                            modifier = Modifier.padding(4.dp)
+                                        )
+                                    }
+                                }
+                            }
+
+                            // Add button box
+                            Box(
+                                modifier = Modifier
+                                    .size(110.dp)
+                                    .background(photoWellBg, RoundedCornerShape(12.dp))
+                                    .drawWithContent {
+                                        drawContent()
+                                        drawRoundRect(
+                                            color = strokeColor,
+                                            style = Stroke(
+                                                width = 3f,
+                                                pathEffect = PathEffect.dashPathEffect(floatArrayOf(10f, 6f), 0f)
+                                            ),
+                                            cornerRadius = androidx.compose.ui.geometry.CornerRadius(12.dp.toPx())
+                                        )
+                                    }
+                                    .clickable {
+                                        photoPickerLauncher.launch("image/*")
+                                    },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Column(
+                                    horizontalAlignment = Alignment.CenterHorizontally,
+                                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Add,
+                                        contentDescription = "Add photo",
+                                        tint = subtextColor,
+                                        modifier = Modifier.size(22.dp)
+                                    )
+                                    Text(
+                                        text = "ADD",
+                                        fontFamily = IbmPlexMonoFontFamily,
+                                        fontSize = 10.sp,
+                                        color = subtextColor
+                                    )
+                                }
+                            }
+                        }
                     }
                 }
 

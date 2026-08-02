@@ -55,13 +55,12 @@ fun LocationsScreen(
         Column(
             modifier = Modifier
                 .fillMaxSize()
-                .padding(top = 12.dp)
         ) {
             // Header
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 20.dp, vertical = 10.dp)
+                    .padding(start = 20.dp, end = 20.dp, top = 0.dp, bottom = 4.dp)
             ) {
                 Text(
                     text = "WHERE YOU'VE BEEN",

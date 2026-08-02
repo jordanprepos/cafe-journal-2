@@ -105,11 +105,11 @@ fun HomeScreen(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 20.dp, end = 20.dp, top = 12.dp, bottom = 8.dp),
+                    .padding(start = 20.dp, end = 20.dp, top = 0.dp, bottom = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.Bottom
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                     Text(
                         text = "${experiences.size} VISITS · 2026",
                         fontFamily = IbmPlexMonoFontFamily,
@@ -358,9 +358,10 @@ fun GridCard(
                     .height(118.dp)
                     .clip(RoundedCornerShape(topStart = 18.dp, topEnd = 18.dp))
             ) {
-                if (experience.photoUri.isNotBlank()) {
+                val firstPhoto = experience.photoUri.split(",").firstOrNull { it.isNotBlank() } ?: ""
+                if (firstPhoto.isNotBlank()) {
                     AsyncImage(
-                        model = experience.photoUri,
+                        model = firstPhoto,
                         contentDescription = experience.cafeName,
                         contentScale = ContentScale.Crop,
                         modifier = Modifier.fillMaxSize()
@@ -585,9 +586,10 @@ fun AlbumFeed(
                                 .height(186.dp)
                                 .clip(RoundedCornerShape(4.dp))
                         ) {
-                            if (exp.photoUri.isNotBlank()) {
+                            val firstPhoto = exp.photoUri.split(",").firstOrNull { it.isNotBlank() } ?: ""
+                            if (firstPhoto.isNotBlank()) {
                                 AsyncImage(
-                                    model = exp.photoUri,
+                                    model = firstPhoto,
                                     contentDescription = exp.cafeName,
                                     contentScale = ContentScale.Crop,
                                     modifier = Modifier.fillMaxSize()
