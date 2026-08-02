@@ -2,6 +2,7 @@ package com.example.ui.locations
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -24,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.CafeExperience
+import com.example.data.ThemeRepository
 import com.example.ui.theme.DMSansFontFamily
 import com.example.ui.theme.IbmPlexMonoFontFamily
 import com.example.util.MapUtils
@@ -37,10 +39,18 @@ fun LocationsScreen(
 ) {
     val experiences by viewModel.experiences.collectAsState()
     val context = LocalContext.current
+    val themeRepository = remember { ThemeRepository(context) }
+    val isDarkModeState by themeRepository.isDarkMode.collectAsState(initial = null)
+    val systemDark = isSystemInDarkTheme()
+    val isDark = isDarkModeState ?: systemDark
+
+    val bgColor = if (isDark) Color(0xFF231A16) else Color(0xFFF8F5F0)
+    val textColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E)
+    val subtextColor = if (isDark) Color(0xFFD5C2B9) else Color(0xFF2E241E).copy(alpha = 0.45f)
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF8F5F0)
+        color = bgColor
     ) {
         Column(
             modifier = Modifier
@@ -59,7 +69,7 @@ fun LocationsScreen(
                     fontWeight = FontWeight.Medium,
                     fontSize = 10.sp,
                     letterSpacing = 1.4.sp,
-                    color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                    color = subtextColor
                 )
                 Text(
                     text = "Places",
@@ -68,7 +78,7 @@ fun LocationsScreen(
                     fontSize = 27.sp,
                     lineHeight = 30.sp,
                     letterSpacing = (-0.54).sp,
-                    color = Color(0xFF2E241E),
+                    color = textColor,
                     modifier = Modifier.padding(top = 3.dp)
                 )
             }
@@ -83,7 +93,7 @@ fun LocationsScreen(
                     Text(
                         text = "No places visited yet.",
                         fontFamily = DMSansFontFamily,
-                        color = Color(0xFF50443D)
+                        color = subtextColor
                     )
                 }
             } else {
@@ -95,6 +105,7 @@ fun LocationsScreen(
                     items(experiences, key = { it.id.ifBlank { it.timestamp.toString() } }) { exp ->
                         PlaceCard(
                             experience = exp,
+                            isDark = isDark,
                             onClick = { onCafeClick(exp.id) },
                             onMapsClick = {
                                 MapUtils.openGoogleMaps(context, exp.cafeName, exp.location)
@@ -110,6 +121,7 @@ fun LocationsScreen(
 @Composable
 fun PlaceCard(
     experience: CafeExperience,
+    isDark: Boolean = false,
     onClick: () -> Unit,
     onMapsClick: () -> Unit
 ) {
@@ -125,9 +137,17 @@ fun PlaceCard(
     val area = experience.location.ifBlank { "Area" }
     val avgFormatted = String.format(Locale.ENGLISH, "%.1f", experience.rating.average)
 
+    val cardBg = if (isDark) Color(0xFF2C221D) else Color.White
+    val textColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E)
+    val subtextColor = if (isDark) Color(0xFFD5C2B9) else Color(0xFF2E241E).copy(alpha = 0.5f)
+    val initialBg = if (isDark) Color(0xFF52281C) else Color(0xFFFFDBD1)
+    val initialTextColor = if (isDark) Color(0xFFFFB5A0) else Color(0xFF8F3F27)
+    val buttonBg = if (isDark) Color(0xFF3D322B) else Color(0xFFEBE6DF)
+    val buttonText = if (isDark) Color(0xFFEDE0DB) else Color(0xFF50443D)
+
     Card(
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -145,7 +165,7 @@ fun PlaceCard(
                 Box(
                     modifier = Modifier
                         .size(44.dp)
-                        .background(Color(0xFFFFDBD1), CircleShape),
+                        .background(initialBg, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
@@ -153,7 +173,7 @@ fun PlaceCard(
                         fontFamily = DMSansFontFamily,
                         fontWeight = FontWeight.SemiBold,
                         fontSize = 15.sp,
-                        color = Color(0xFF8F3F27)
+                        color = initialTextColor
                     )
                 }
 
@@ -167,7 +187,7 @@ fun PlaceCard(
                         fontFamily = DMSansFontFamily,
                         fontWeight = FontWeight.Bold,
                         fontSize = 15.sp,
-                        color = Color(0xFF2E241E),
+                        color = textColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -176,7 +196,7 @@ fun PlaceCard(
                         fontFamily = DMSansFontFamily,
                         fontWeight = FontWeight.Normal,
                         fontSize = 12.sp,
-                        color = Color(0xFF2E241E).copy(alpha = 0.5f),
+                        color = subtextColor,
                         modifier = Modifier.padding(top = 1.dp)
                     )
                 }
@@ -195,8 +215,8 @@ fun PlaceCard(
             Surface(
                 onClick = onMapsClick,
                 shape = RoundedCornerShape(12.dp),
-                color = Color(0xFFEBE6DF),
-                contentColor = Color(0xFF50443D),
+                color = buttonBg,
+                contentColor = buttonText,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(42.dp)
@@ -211,7 +231,7 @@ fun PlaceCard(
                         Icons.Default.LocationOn,
                         contentDescription = null,
                         modifier = Modifier.size(16.dp),
-                        tint = Color(0xFF50443D)
+                        tint = buttonText
                     )
                     Spacer(modifier = Modifier.width(6.dp))
                     Text(

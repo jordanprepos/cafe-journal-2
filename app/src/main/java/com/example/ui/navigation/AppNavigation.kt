@@ -1,5 +1,6 @@
 package com.example.ui.navigation
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.BarChart
@@ -13,10 +14,13 @@ import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -28,6 +32,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.example.data.ThemeRepository
 import com.example.ui.add.AddCafeScreen
 import com.example.ui.detail.CafeDetailScreen
 import com.example.ui.home.HomeScreen
@@ -51,6 +56,11 @@ data class BottomNavItem(val name: String, val route: String, val icon: ImageVec
 @Composable
 fun AppNavigation() {
     val navController = rememberNavController()
+    val context = LocalContext.current
+    val themeRepository = remember { ThemeRepository(context) }
+    val isDarkModeState by themeRepository.isDarkMode.collectAsState(initial = null)
+    val systemDark = isSystemInDarkTheme()
+    val isDark = isDarkModeState ?: systemDark
 
     val navItems = listOf(
         BottomNavItem("Journal", ROUTE_HOME, Icons.Default.Home),
@@ -69,7 +79,7 @@ fun AppNavigation() {
 
             if (showBottomBar) {
                 NavigationBar(
-                    containerColor = Color.White,
+                    containerColor = if (isDark) Color(0xFF2C221D) else Color.White,
                     tonalElevation = 0.dp
                 ) {
                     navItems.forEach { item ->
@@ -90,9 +100,9 @@ fun AppNavigation() {
                             colors = NavigationBarItemDefaults.colors(
                                 selectedIconColor = Color(0xFFC05A3B),
                                 selectedTextColor = Color(0xFFC05A3B),
-                                indicatorColor = Color(0x1AC05A3B),
-                                unselectedIconColor = Color(0xFFD6CFC7),
-                                unselectedTextColor = Color(0xFF2E241E).copy(alpha = 0.45f)
+                                indicatorColor = Color(0x33C05A3B),
+                                unselectedIconColor = if (isDark) Color(0xFF8A7B73) else Color(0xFFD6CFC7),
+                                unselectedTextColor = if (isDark) Color(0xFFD5C2B9).copy(alpha = 0.6f) else Color(0xFF2E241E).copy(alpha = 0.45f)
                             ),
                             onClick = {
                                 navController.navigate(item.route) {

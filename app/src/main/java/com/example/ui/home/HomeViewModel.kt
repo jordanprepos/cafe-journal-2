@@ -24,6 +24,13 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
             initialValue = emptyList()
         )
 
+    val isDarkMode: StateFlow<Boolean?> = themeRepository.isDarkMode
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = null
+        )
+
     val journalView: StateFlow<String> = themeRepository.journalView
         .stateIn(
             scope = viewModelScope,
@@ -33,6 +40,12 @@ class HomeViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _selectedFilter = MutableStateFlow("All")
     val selectedFilter: StateFlow<String> = _selectedFilter.asStateFlow()
+
+    fun setDarkMode(isDark: Boolean) {
+        viewModelScope.launch {
+            themeRepository.setDarkMode(isDark)
+        }
+    }
 
     fun setJournalView(view: String) {
         viewModelScope.launch {

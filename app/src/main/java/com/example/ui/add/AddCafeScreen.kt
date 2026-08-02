@@ -3,6 +3,7 @@ package com.example.ui.add
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -17,12 +18,14 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.data.CafeRating
+import com.example.data.ThemeRepository
 import com.example.ui.theme.DMSansFontFamily
 import com.example.ui.theme.IbmPlexMonoFontFamily
 import com.example.ui.theme.NewsreaderFontFamily
@@ -45,6 +48,20 @@ fun AddCafeScreen(
     val saveError by viewModel.saveError.collectAsState()
     val saveSuccess by viewModel.saveSuccess.collectAsState()
     val loadedExperience by viewModel.loadedExperience.collectAsState()
+
+    val context = LocalContext.current
+    val themeRepository = remember { ThemeRepository(context) }
+    val isDarkModeState by themeRepository.isDarkMode.collectAsState(initial = null)
+    val systemDark = isSystemInDarkTheme()
+    val isDark = isDarkModeState ?: systemDark
+
+    val bgColor = if (isDark) Color(0xFF231A16) else Color(0xFFF8F5F0)
+    val cardBgColor = if (isDark) Color(0xFF2C221D) else Color.White
+    val textColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E)
+    val subtextColor = if (isDark) Color(0xFFD5C2B9) else Color(0xFF2E241E).copy(alpha = 0.55f)
+    val dividerColor = if (isDark) Color(0xFF3D322B) else Color(0xFFEBE6DF)
+    val photoWellBg = if (isDark) Color(0xFF2C221D) else Color(0xFFEFEAE2)
+    val fieldBorderColor = if (isDark) Color(0xFF4A3B33) else Color(0xFFDED7CD)
 
     var cafeName by remember { mutableStateOf("") }
     var area by remember { mutableStateOf("") }
@@ -90,14 +107,14 @@ fun AddCafeScreen(
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF8F5F0)
+        color = bgColor
     ) {
         Column(modifier = Modifier.fillMaxSize()) {
             // Top Bar
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color(0xFFF8F5F0))
+                    .background(bgColor)
                     .padding(horizontal = 20.dp, vertical = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
@@ -107,7 +124,7 @@ fun AddCafeScreen(
                     fontFamily = DMSansFontFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 14.sp,
-                    color = Color(0xFF2E241E).copy(alpha = 0.55f),
+                    color = subtextColor,
                     modifier = Modifier.clickable { onBack() }
                 )
                 Text(
@@ -115,7 +132,7 @@ fun AddCafeScreen(
                     fontFamily = DMSansFontFamily,
                     fontWeight = FontWeight.Bold,
                     fontSize = 16.sp,
-                    color = Color(0xFF2E241E)
+                    color = textColor
                 )
                 Text(
                     text = "Save",
@@ -139,7 +156,7 @@ fun AddCafeScreen(
                     }
                 )
             }
-            HorizontalDivider(color = Color(0xFFEBE6DF), thickness = 1.dp)
+            HorizontalDivider(color = dividerColor, thickness = 1.dp)
 
             // Form
             Column(
@@ -150,12 +167,12 @@ fun AddCafeScreen(
                 verticalArrangement = Arrangement.spacedBy(18.dp)
             ) {
                 // Photo well
-                val strokeColor = Color(0xFF2E241E).copy(alpha = 0.25f)
+                val strokeColor = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.3f) else Color(0xFF2E241E).copy(alpha = 0.25f)
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(132.dp)
-                        .background(Color(0xFFEFEAE2), RoundedCornerShape(16.dp))
+                        .background(photoWellBg, RoundedCornerShape(16.dp))
                         .drawWithContent {
                             drawContent()
                             drawRoundRect(
@@ -179,7 +196,7 @@ fun AddCafeScreen(
                         Box(
                             modifier = Modifier
                                 .size(width = 30.dp, height = 24.dp)
-                                .border(1.8.dp, Color(0xFF2E241E).copy(alpha = 0.4f), RoundedCornerShape(5.dp))
+                                .border(1.8.dp, strokeColor, RoundedCornerShape(5.dp))
                         )
                         Text(
                             text = "ADD A PHOTO",
@@ -187,17 +204,22 @@ fun AddCafeScreen(
                             fontWeight = FontWeight.Normal,
                             fontSize = 11.sp,
                             letterSpacing = 0.8.sp,
-                            color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                            color = subtextColor
                         )
                     }
                 }
 
                 // CAFE NAME
-                FormField(label = "CAFE NAME") {
+                FormField(label = "CAFE NAME", subtextColor = subtextColor) {
                     CustomTextField(
                         value = cafeName,
                         onValueChange = { cafeName = it },
-                        placeholder = "e.g. Kopi Nako"
+                        placeholder = "e.g. Kopi Nako",
+                        isDark = isDark,
+                        containerColor = cardBgColor,
+                        borderColor = fieldBorderColor,
+                        textColor = textColor,
+                        subtextColor = subtextColor
                     )
                 }
 
@@ -207,46 +229,61 @@ fun AddCafeScreen(
                     modifier = Modifier.fillMaxWidth()
                 ) {
                     Box(modifier = Modifier.weight(1f)) {
-                        FormField(label = "AREA") {
+                        FormField(label = "AREA", subtextColor = subtextColor) {
                             CustomTextField(
                                 value = area,
                                 onValueChange = { area = it },
-                                placeholder = "Kemang"
+                                placeholder = "Kemang",
+                                isDark = isDark,
+                                containerColor = cardBgColor,
+                                borderColor = fieldBorderColor,
+                                textColor = textColor,
+                                subtextColor = subtextColor
                             )
                         }
                     }
                     Box(modifier = Modifier.weight(1f)) {
-                        FormField(label = "PRICE") {
+                        FormField(label = "PRICE", subtextColor = subtextColor) {
                             CustomTextField(
                                 value = price,
                                 onValueChange = { price = it },
-                                placeholder = "Rp 35K"
+                                placeholder = "Rp 35K",
+                                isDark = isDark,
+                                containerColor = cardBgColor,
+                                borderColor = fieldBorderColor,
+                                textColor = textColor,
+                                subtextColor = subtextColor
                             )
                         }
                     }
                 }
 
                 // WHAT YOU DRANK
-                FormField(label = "WHAT YOU DRANK") {
+                FormField(label = "WHAT YOU DRANK", subtextColor = subtextColor) {
                     CustomTextField(
                         value = drink,
                         onValueChange = { drink = it },
-                        placeholder = "Flat white, oat"
+                        placeholder = "Flat white, oat",
+                        isDark = isDark,
+                        containerColor = cardBgColor,
+                        borderColor = fieldBorderColor,
+                        textColor = textColor,
+                        subtextColor = subtextColor
                     )
                 }
 
                 // RATE IT
-                FormField(label = "RATE IT") {
+                FormField(label = "RATE IT", subtextColor = subtextColor) {
                     Column(verticalArrangement = Arrangement.spacedBy(11.dp)) {
-                        RatingDotsRow("Coffee", coffeeRating) { coffeeRating = it }
-                        RatingDotsRow("Vibe", vibeRating) { vibeRating = it }
-                        RatingDotsRow("WiFi", wifiRating) { wifiRating = it }
-                        RatingDotsRow("Seating", seatingRating) { seatingRating = it }
+                        RatingDotsRow("Coffee", coffeeRating, textColor, isDark) { coffeeRating = it }
+                        RatingDotsRow("Vibe", vibeRating, textColor, isDark) { vibeRating = it }
+                        RatingDotsRow("WiFi", wifiRating, textColor, isDark) { wifiRating = it }
+                        RatingDotsRow("Seating", seatingRating, textColor, isDark) { seatingRating = it }
                     }
                 }
 
                 // FACILITIES
-                FormField(label = "FACILITIES") {
+                FormField(label = "FACILITIES", subtextColor = subtextColor) {
                     FlowRow(
                         horizontalArrangement = Arrangement.spacedBy(7.dp),
                         verticalArrangement = Arrangement.spacedBy(7.dp),
@@ -254,13 +291,15 @@ fun AddCafeScreen(
                     ) {
                         ALL_FACILITY_TAGS.forEach { tag ->
                             val isSelected = selectedTags.contains(tag)
+                            val tagBg = if (isSelected) (if (isDark) Color(0xFFE0A891) else Color(0xFF2E241E)) else (if (isDark) Color(0xFF2C221D) else Color(0xFFEBE6DF))
+                            val tagContent = if (isSelected) (if (isDark) Color(0xFF231A16) else Color(0xFFF8F5F0)) else textColor
                             Surface(
                                 onClick = {
                                     selectedTags = if (isSelected) selectedTags - tag else selectedTags + tag
                                 },
                                 shape = RoundedCornerShape(999.dp),
-                                color = if (isSelected) Color(0xFF2E241E) else Color(0xFFEBE6DF),
-                                contentColor = if (isSelected) Color(0xFFF8F5F0) else Color(0xFF50443D)
+                                color = tagBg,
+                                contentColor = tagContent
                             ) {
                                 Text(
                                     text = tag,
@@ -275,7 +314,7 @@ fun AddCafeScreen(
                 }
 
                 // NOTES TO FUTURE YOU
-                FormField(label = "NOTES TO FUTURE YOU") {
+                FormField(label = "NOTES TO FUTURE YOU", subtextColor = subtextColor) {
                     OutlinedTextField(
                         value = note,
                         onValueChange = { note = it },
@@ -285,20 +324,20 @@ fun AddCafeScreen(
                                 fontFamily = NewsreaderFontFamily,
                                 fontStyle = FontStyle.Italic,
                                 fontSize = 15.sp,
-                                color = Color(0xFF2E241E).copy(alpha = 0.4f)
+                                color = subtextColor
                             )
                         },
                         textStyle = LocalTextStyle.current.copy(
                             fontFamily = NewsreaderFontFamily,
                             fontStyle = FontStyle.Italic,
                             fontSize = 15.sp,
-                            color = Color(0xFF2E241E)
+                            color = textColor
                         ),
                         colors = OutlinedTextFieldDefaults.colors(
-                            focusedContainerColor = Color.White,
-                            unfocusedContainerColor = Color.White,
+                            focusedContainerColor = cardBgColor,
+                            unfocusedContainerColor = cardBgColor,
                             focusedBorderColor = Color(0xFFC05A3B),
-                            unfocusedBorderColor = Color(0xFFDED7CD)
+                            unfocusedBorderColor = fieldBorderColor
                         ),
                         shape = RoundedCornerShape(12.dp),
                         modifier = Modifier
@@ -368,6 +407,7 @@ fun AddCafeScreen(
 @Composable
 fun FormField(
     label: String,
+    subtextColor: Color = Color(0xFF2E241E).copy(alpha = 0.45f),
     content: @Composable () -> Unit
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(7.dp)) {
@@ -377,7 +417,7 @@ fun FormField(
             fontWeight = FontWeight.Medium,
             fontSize = 10.sp,
             letterSpacing = 1.4.sp,
-            color = Color(0xFF2E241E).copy(alpha = 0.45f)
+            color = subtextColor
         )
         content()
     }
@@ -387,7 +427,12 @@ fun FormField(
 fun CustomTextField(
     value: String,
     onValueChange: (String) -> Unit,
-    placeholder: String
+    placeholder: String,
+    isDark: Boolean = false,
+    containerColor: Color = Color.White,
+    borderColor: Color = Color(0xFFDED7CD),
+    textColor: Color = Color(0xFF2E241E),
+    subtextColor: Color = Color(0xFF2E241E).copy(alpha = 0.4f)
 ) {
     OutlinedTextField(
         value = value,
@@ -397,20 +442,20 @@ fun CustomTextField(
                 placeholder,
                 fontFamily = DMSansFontFamily,
                 fontSize = 15.sp,
-                color = Color(0xFF2E241E).copy(alpha = 0.4f)
+                color = subtextColor
             )
         },
         singleLine = true,
         textStyle = LocalTextStyle.current.copy(
             fontFamily = DMSansFontFamily,
             fontSize = 15.sp,
-            color = Color(0xFF2E241E)
+            color = textColor
         ),
         colors = OutlinedTextFieldDefaults.colors(
-            focusedContainerColor = Color.White,
-            unfocusedContainerColor = Color.White,
+            focusedContainerColor = containerColor,
+            unfocusedContainerColor = containerColor,
             focusedBorderColor = Color(0xFFC05A3B),
-            unfocusedBorderColor = Color(0xFFDED7CD)
+            unfocusedBorderColor = borderColor
         ),
         shape = RoundedCornerShape(12.dp),
         modifier = Modifier
@@ -423,8 +468,11 @@ fun CustomTextField(
 fun RatingDotsRow(
     label: String,
     ratingValue: Float,
+    labelTextColor: Color = Color(0xFF2E241E),
+    isDark: Boolean = false,
     onRatingChange: (Float) -> Unit
 ) {
+    val unselectedDotColor = if (isDark) Color(0xFF3D322B) else Color(0xFFEBE6DF)
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -435,7 +483,7 @@ fun RatingDotsRow(
             fontFamily = DMSansFontFamily,
             fontWeight = FontWeight.Normal,
             fontSize = 14.sp,
-            color = Color(0xFF2E241E)
+            color = labelTextColor
         )
         Row(horizontalArrangement = Arrangement.spacedBy(7.dp)) {
             (1..5).forEach { dotIndex ->
@@ -444,7 +492,7 @@ fun RatingDotsRow(
                     modifier = Modifier
                         .size(22.dp)
                         .background(
-                            color = if (isFilled) Color(0xFFC05A3B) else Color(0xFFEBE6DF),
+                            color = if (isFilled) Color(0xFFC05A3B) else unselectedDotColor,
                             shape = CircleShape
                         )
                         .clickable { onRatingChange(dotIndex.toFloat()) }

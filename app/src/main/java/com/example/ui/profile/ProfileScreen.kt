@@ -1,5 +1,6 @@
 package com.example.ui.profile
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -17,12 +18,16 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.R
 import com.example.ui.theme.DMSansFontFamily
 import com.example.ui.theme.IbmPlexMonoFontFamily
 
@@ -36,9 +41,15 @@ fun ProfileScreen(
     val systemDark = isSystemInDarkTheme()
     val isDark = isDarkModeState ?: systemDark
 
+    val bgColor = if (isDark) Color(0xFF231A16) else Color(0xFFF8F5F0)
+    val cardBgColor = if (isDark) Color(0xFF2C221D) else Color.White
+    val textColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E)
+    val subtextColor = if (isDark) Color(0xFFD5C2B9) else Color(0xFF2E241E).copy(alpha = 0.45f)
+    val dividerColor = if (isDark) Color(0xFF3D322B) else Color(0xFFEFEAE2)
+
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF8F5F0)
+        color = bgColor
     ) {
         Column(
             modifier = Modifier
@@ -57,18 +68,30 @@ fun ProfileScreen(
                     fontWeight = FontWeight.Medium,
                     fontSize = 10.sp,
                     letterSpacing = 1.4.sp,
-                    color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                    color = subtextColor
                 )
-                Text(
-                    text = "Profile",
-                    fontFamily = DMSansFontFamily,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 27.sp,
-                    lineHeight = 30.sp,
-                    letterSpacing = (-0.54).sp,
-                    color = Color(0xFF2E241E),
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
                     modifier = Modifier.padding(top = 3.dp)
-                )
+                ) {
+                    Image(
+                        painter = painterResource(id = if (isDark) R.drawable.cafe_journal_logo_dark_theme else R.drawable.cafe_journal_logo_light_theme),
+                        contentDescription = "Profile Logo",
+                        modifier = Modifier
+                            .size(32.dp)
+                            .clip(RoundedCornerShape(8.dp))
+                    )
+                    Text(
+                        text = "Profile",
+                        fontFamily = DMSansFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 27.sp,
+                        lineHeight = 30.sp,
+                        letterSpacing = (-0.54).sp,
+                        color = textColor
+                    )
+                }
             }
 
             Column(
@@ -83,15 +106,15 @@ fun ProfileScreen(
                 Box(
                     modifier = Modifier
                         .size(80.dp)
-                        .background(Color(0xFFC05A3B), CircleShape),
+                        .clip(CircleShape)
+                        .background(Color(0xFFC05A3B)),
                     contentAlignment = Alignment.Center
                 ) {
-                    Text(
-                        text = "J",
-                        fontFamily = DMSansFontFamily,
-                        fontWeight = FontWeight.SemiBold,
-                        fontSize = 30.sp,
-                        color = Color.White
+                    Image(
+                        painter = painterResource(id = if (isDark) R.drawable.cafe_journal_logo_dark_theme else R.drawable.cafe_journal_logo_light_theme),
+                        contentDescription = "User Avatar Logo",
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier.fillMaxSize()
                     )
                 }
 
@@ -106,14 +129,14 @@ fun ProfileScreen(
                         fontFamily = DMSansFontFamily,
                         fontWeight = FontWeight.Bold,
                         fontSize = 19.sp,
-                        color = Color(0xFF2E241E)
+                        color = textColor
                     )
                     Text(
                         text = "Private journal · since Mar 2025",
                         fontFamily = DMSansFontFamily,
                         fontWeight = FontWeight.Normal,
                         fontSize = 13.sp,
-                        color = Color(0xFF2E241E).copy(alpha = 0.5f)
+                        color = subtextColor
                     )
                 }
 
@@ -161,7 +184,7 @@ fun ProfileScreen(
                 // Settings Card
                 Card(
                     shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    colors = CardDefaults.cardColors(containerColor = cardBgColor),
                     elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                     modifier = Modifier.fillMaxWidth()
                 ) {
@@ -179,7 +202,7 @@ fun ProfileScreen(
                                 fontFamily = DMSansFontFamily,
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 14.5.sp,
-                                color = Color(0xFF2E241E)
+                                color = textColor
                             )
                             Switch(
                                 checked = isDark,
@@ -192,7 +215,7 @@ fun ProfileScreen(
                                 )
                             )
                         }
-                        HorizontalDivider(color = Color(0xFFEFEAE2), thickness = 1.dp)
+                        HorizontalDivider(color = dividerColor, thickness = 1.dp)
 
                         // Row 2: Default journal view
                         Row(
@@ -207,17 +230,17 @@ fun ProfileScreen(
                                 fontFamily = DMSansFontFamily,
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 14.5.sp,
-                                color = Color(0xFF2E241E)
+                                color = textColor
                             )
                             Text(
                                 text = journalView.replaceFirstChar { it.uppercase() },
                                 fontFamily = DMSansFontFamily,
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 13.5.sp,
-                                color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                                color = subtextColor
                             )
                         }
-                        HorizontalDivider(color = Color(0xFFEFEAE2), thickness = 1.dp)
+                        HorizontalDivider(color = dividerColor, thickness = 1.dp)
 
                         // Row 3: Export journal
                         Row(
@@ -232,14 +255,14 @@ fun ProfileScreen(
                                 fontFamily = DMSansFontFamily,
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 14.5.sp,
-                                color = Color(0xFF2E241E)
+                                color = textColor
                             )
                             Text(
                                 text = "CSV",
                                 fontFamily = DMSansFontFamily,
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 13.5.sp,
-                                color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                                color = subtextColor
                             )
                         }
                     }

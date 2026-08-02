@@ -3,6 +3,7 @@ package com.example.ui.detail
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -28,6 +29,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
 import com.example.data.CafeExperience
+import com.example.data.ThemeRepository
 import com.example.ui.components.ExperiencePhotoPlaceholder
 import com.example.ui.theme.DMSansFontFamily
 import com.example.ui.theme.IbmPlexMonoFontFamily
@@ -46,10 +48,21 @@ fun CafeDetailScreen(
 ) {
     val experience by viewModel.experience.collectAsState()
     val context = LocalContext.current
+    val themeRepository = remember { ThemeRepository(context) }
+    val isDarkModeState by themeRepository.isDarkMode.collectAsState(initial = null)
+    val systemDark = isSystemInDarkTheme()
+    val isDark = isDarkModeState ?: systemDark
+
+    val bgColor = if (isDark) Color(0xFF231A16) else Color(0xFFF8F5F0)
+    val cardBgColor = if (isDark) Color(0xFF2C221D) else Color.White
+    val textColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E)
+    val subtextColor = if (isDark) Color(0xFFD5C2B9) else Color(0xFF2E241E).copy(alpha = 0.5f)
+    val boxBgColor = if (isDark) Color(0xFF3D322B) else Color(0xFFEBE6DF)
+    val tagTextColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF50443D)
 
     Surface(
         modifier = Modifier.fillMaxSize(),
-        color = Color(0xFFF8F5F0)
+        color = bgColor
     ) {
         val exp = experience
         if (exp == null) {
@@ -89,7 +102,7 @@ fun CafeDetailScreen(
                     Surface(
                         onClick = onBack,
                         shape = CircleShape,
-                        color = Color(0xEBF8F5F0),
+                        color = if (isDark) Color(0xCC231A16) else Color(0xEBF8F5F0),
                         modifier = Modifier
                             .padding(top = 12.dp, start = 16.dp)
                             .size(36.dp)
@@ -99,7 +112,7 @@ fun CafeDetailScreen(
                             Icon(
                                 Icons.AutoMirrored.Filled.ArrowBack,
                                 contentDescription = "Back",
-                                tint = Color(0xFF2E241E),
+                                tint = textColor,
                                 modifier = Modifier.size(18.dp)
                             )
                         }
@@ -108,7 +121,7 @@ fun CafeDetailScreen(
                     // Caption Chip (bottom-left)
                     val captionText = "PHOTO — ${exp.coffeeRecommendation.ifBlank { exp.cafeName }}"
                     Surface(
-                        color = Color(0xD9F8F5F0),
+                        color = if (isDark) Color(0xCC2C221D) else Color(0xD9F8F5F0),
                         shape = RoundedCornerShape(3.dp),
                         modifier = Modifier
                             .align(Alignment.BottomStart)
@@ -120,7 +133,7 @@ fun CafeDetailScreen(
                             fontWeight = FontWeight.Medium,
                             fontSize = 9.sp,
                             letterSpacing = 0.9.sp,
-                            color = Color(0xFF2E241E).copy(alpha = 0.55f),
+                            color = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.7f) else Color(0xFF2E241E).copy(alpha = 0.55f),
                             modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                         )
                     }
@@ -142,7 +155,7 @@ fun CafeDetailScreen(
                             fontSize = 25.sp,
                             lineHeight = 29.sp,
                             letterSpacing = (-0.5).sp,
-                            color = Color(0xFF2E241E)
+                            color = textColor
                         )
 
                         val formattedDate = remember(exp.timestamp) {
@@ -157,14 +170,14 @@ fun CafeDetailScreen(
                             fontWeight = FontWeight.Normal,
                             fontSize = 12.5.sp,
                             letterSpacing = 0.5.sp,
-                            color = Color(0xFF2E241E).copy(alpha = 0.5f)
+                            color = subtextColor
                         )
                     }
 
                     // Rating Card
                     Card(
                         shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = Color.White),
+                        colors = CardDefaults.cardColors(containerColor = cardBgColor),
                         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
                         modifier = Modifier.fillMaxWidth()
                     ) {
@@ -183,7 +196,7 @@ fun CafeDetailScreen(
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 10.sp,
                                     letterSpacing = 1.4.sp,
-                                    color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                                    color = subtextColor
                                 )
                                 val avgFormatted = String.format(Locale.ENGLISH, "%.1f", exp.rating.average)
                                 Text(
@@ -195,10 +208,10 @@ fun CafeDetailScreen(
                                 )
                             }
 
-                            DetailRatingRow("Coffee", exp.rating.coffee)
-                            DetailRatingRow("Vibe", exp.rating.vibe)
-                            DetailRatingRow("WiFi", exp.rating.wifi)
-                            DetailRatingRow("Seating", exp.rating.seating)
+                            DetailRatingRow("Coffee", exp.rating.coffee, isDark)
+                            DetailRatingRow("Vibe", exp.rating.vibe, isDark)
+                            DetailRatingRow("WiFi", exp.rating.wifi, isDark)
+                            DetailRatingRow("Seating", exp.rating.seating, isDark)
                         }
                     }
 
@@ -210,7 +223,7 @@ fun CafeDetailScreen(
                             fontWeight = FontWeight.Medium,
                             fontSize = 10.sp,
                             letterSpacing = 1.4.sp,
-                            color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                            color = subtextColor
                         )
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -220,7 +233,7 @@ fun CafeDetailScreen(
                             Box(
                                 modifier = Modifier
                                     .weight(1f)
-                                    .background(Color(0xFFEBE6DF), RoundedCornerShape(12.dp))
+                                    .background(boxBgColor, RoundedCornerShape(12.dp))
                                     .padding(horizontal = 13.dp, vertical = 11.dp)
                             ) {
                                 Column {
@@ -229,14 +242,14 @@ fun CafeDetailScreen(
                                         fontFamily = DMSansFontFamily,
                                         fontWeight = FontWeight.Normal,
                                         fontSize = 10.sp,
-                                        color = Color(0xFF2E241E).copy(alpha = 0.5f)
+                                        color = subtextColor
                                     )
                                     Text(
                                         text = exp.coffeeRecommendation.ifBlank { "Not noted" },
                                         fontFamily = DMSansFontFamily,
                                         fontWeight = FontWeight.Medium,
                                         fontSize = 14.sp,
-                                        color = Color(0xFF2E241E),
+                                        color = textColor,
                                         modifier = Modifier.padding(top = 2.dp)
                                     )
                                 }
@@ -245,7 +258,7 @@ fun CafeDetailScreen(
                             // Price
                             Box(
                                 modifier = Modifier
-                                    .background(Color(0xFFEBE6DF), RoundedCornerShape(12.dp))
+                                    .background(boxBgColor, RoundedCornerShape(12.dp))
                                     .padding(horizontal = 13.dp, vertical = 11.dp)
                             ) {
                                 Column {
@@ -254,14 +267,14 @@ fun CafeDetailScreen(
                                         fontFamily = DMSansFontFamily,
                                         fontWeight = FontWeight.Normal,
                                         fontSize = 10.sp,
-                                        color = Color(0xFF2E241E).copy(alpha = 0.5f)
+                                        color = subtextColor
                                     )
                                     Text(
                                         text = exp.priceRange.ifBlank { "—" },
                                         fontFamily = DMSansFontFamily,
                                         fontWeight = FontWeight.Medium,
                                         fontSize = 14.sp,
-                                        color = Color(0xFF2E241E),
+                                        color = textColor,
                                         modifier = Modifier.padding(top = 2.dp)
                                     )
                                 }
@@ -278,7 +291,7 @@ fun CafeDetailScreen(
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 10.sp,
                                 letterSpacing = 1.4.sp,
-                                color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                                color = subtextColor
                             )
                             Text(
                                 text = exp.notes,
@@ -287,7 +300,7 @@ fun CafeDetailScreen(
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 15.5.sp,
                                 lineHeight = 25.sp,
-                                color = Color(0xFF2E241E).copy(alpha = 0.85f)
+                                color = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.9f) else Color(0xFF2E241E).copy(alpha = 0.85f)
                             )
                         }
                     }
@@ -301,7 +314,7 @@ fun CafeDetailScreen(
                         ) {
                             exp.facilitiesTags.forEach { tag ->
                                 Surface(
-                                    color = Color(0xFFEBE6DF),
+                                    color = boxBgColor,
                                     shape = RoundedCornerShape(6.dp)
                                 ) {
                                     Text(
@@ -309,7 +322,7 @@ fun CafeDetailScreen(
                                         fontFamily = DMSansFontFamily,
                                         fontWeight = FontWeight.Normal,
                                         fontSize = 11.5.sp,
-                                        color = Color(0xFF50443D),
+                                        color = tagTextColor,
                                         modifier = Modifier.padding(horizontal = 9.dp, vertical = 5.dp)
                                     )
                                 }
@@ -371,7 +384,11 @@ fun CafeDetailScreen(
 }
 
 @Composable
-fun DetailRatingRow(label: String, value: Float) {
+fun DetailRatingRow(label: String, value: Float, isDark: Boolean = false) {
+    val labelColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF50443D)
+    val trackBg = if (isDark) Color(0xFF3D322B) else Color(0xFFEBE6DF)
+    val valColor = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.7f) else Color(0xFF2E241E).copy(alpha = 0.6f)
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(10.dp),
@@ -382,14 +399,14 @@ fun DetailRatingRow(label: String, value: Float) {
             fontFamily = DMSansFontFamily,
             fontWeight = FontWeight.Normal,
             fontSize = 11.sp,
-            color = Color(0xFF50443D),
+            color = labelColor,
             modifier = Modifier.width(58.dp)
         )
         Box(
             modifier = Modifier
                 .weight(1f)
                 .height(5.dp)
-                .background(Color(0xFFEBE6DF), RoundedCornerShape(3.dp))
+                .background(trackBg, RoundedCornerShape(3.dp))
         ) {
             val fraction = (value / 5f).coerceIn(0f, 1f)
             if (fraction > 0f) {
@@ -407,7 +424,7 @@ fun DetailRatingRow(label: String, value: Float) {
             fontFamily = IbmPlexMonoFontFamily,
             fontWeight = FontWeight.Medium,
             fontSize = 11.sp,
-            color = Color(0xFF2E241E).copy(alpha = 0.6f),
+            color = valColor,
             modifier = Modifier.width(22.dp)
         )
     }

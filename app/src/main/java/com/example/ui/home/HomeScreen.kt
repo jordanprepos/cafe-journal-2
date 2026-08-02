@@ -4,10 +4,12 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -19,6 +21,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -26,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -33,6 +38,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil.compose.AsyncImage
+import com.example.R
 import com.example.data.CafeExperience
 import com.example.ui.components.ExperiencePhotoPlaceholder
 import com.example.ui.theme.DMSansFontFamily
@@ -51,6 +57,9 @@ fun HomeScreen(
     val experiences by viewModel.experiences.collectAsState()
     val journalView by viewModel.journalView.collectAsState()
     val selectedFilter by viewModel.selectedFilter.collectAsState()
+    val isDarkModeState by viewModel.isDarkMode.collectAsState()
+    val systemDark = isSystemInDarkTheme()
+    val isDark = isDarkModeState ?: systemDark
 
     val filteredExperiences = remember(experiences, selectedFilter) {
         if (selectedFilter == "All" || selectedFilter.startsWith("All ")) {
@@ -61,7 +70,10 @@ fun HomeScreen(
     }
 
     val isAlbum = journalView == "album"
-    val backgroundColor = if (isAlbum) Color(0xFFF3EEE6) else Color(0xFFF8F5F0)
+    val backgroundColor = if (isDark) Color(0xFF231A16) else if (isAlbum) Color(0xFFF3EEE6) else Color(0xFFF8F5F0)
+    val textColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E)
+    val subtextColor = if (isDark) Color(0xFFD5C2B9) else Color(0xFF2E241E).copy(alpha = 0.45f)
+    val controlBgColor = if (isDark) Color(0xFF3D322B) else Color(0xFFEBE6DF)
 
     Scaffold(
         containerColor = backgroundColor,
@@ -104,59 +116,107 @@ fun HomeScreen(
                         fontWeight = FontWeight.Medium,
                         fontSize = 10.sp,
                         letterSpacing = 1.4.sp,
-                        color = Color(0xFF2E241E).copy(alpha = 0.45f),
+                        color = subtextColor,
                         maxLines = 1
                     )
-                    Text(
-                        text = "Journal",
-                        fontFamily = DMSansFontFamily,
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 27.sp,
-                        lineHeight = 30.sp,
-                        letterSpacing = (-0.54).sp,
-                        color = Color(0xFF2E241E)
-                    )
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(10.dp)
+                    ) {
+                        Image(
+                            painter = painterResource(id = if (isDark) R.drawable.cafe_journal_logo_dark_theme else R.drawable.cafe_journal_logo_light_theme),
+                            contentDescription = "Journal Logo",
+                            modifier = Modifier
+                                .size(32.dp)
+                                .clip(RoundedCornerShape(8.dp))
+                        )
+                        Text(
+                            text = "Journal",
+                            fontFamily = DMSansFontFamily,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 27.sp,
+                            lineHeight = 30.sp,
+                            letterSpacing = (-0.54).sp,
+                            color = textColor
+                        )
+                    }
                 }
 
-                // View Toggle
+                // Top Controls (Theme Toggle & View Toggle)
                 Row(
-                    modifier = Modifier
-                        .background(Color(0xFFEBE6DF), RoundedCornerShape(11.dp))
-                        .padding(3.dp),
-                    horizontalArrangement = Arrangement.spacedBy(2.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
-                    // Grid Segment
-                    ViewToggleSegment(
-                        isSelected = !isAlbum,
-                        onClick = { viewModel.setJournalView("grid") }
+                    // Dark/Light Theme Toggle Button
+                    Surface(
+                        onClick = { viewModel.setDarkMode(!isDark) },
+                        shape = RoundedCornerShape(11.dp),
+                        color = controlBgColor,
+                        modifier = Modifier.height(36.dp)
                     ) {
-                        // Grid Icon (2x2)
-                        Column(verticalArrangement = Arrangement.spacedBy(2.5.dp)) {
-                            Row(horizontalArrangement = Arrangement.spacedBy(2.5.dp)) {
-                                Box(modifier = Modifier.size(6.dp).background(if (!isAlbum) Color(0xFF2E241E) else Color(0xFF2E241E).copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
-                                Box(modifier = Modifier.size(6.dp).background(if (!isAlbum) Color(0xFF2E241E) else Color(0xFF2E241E).copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
-                            }
-                            Row(horizontalArrangement = Arrangement.spacedBy(2.5.dp)) {
-                                Box(modifier = Modifier.size(6.dp).background(if (!isAlbum) Color(0xFF2E241E) else Color(0xFF2E241E).copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
-                                Box(modifier = Modifier.size(6.dp).background(if (!isAlbum) Color(0xFF2E241E) else Color(0xFF2E241E).copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
-                            }
+                        Row(
+                            modifier = Modifier.padding(horizontal = 10.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(5.dp)
+                        ) {
+                            Icon(
+                                imageVector = if (isDark) Icons.Default.LightMode else Icons.Default.DarkMode,
+                                contentDescription = if (isDark) "Switch to Light Mode" else "Switch to Dark Mode",
+                                tint = if (isDark) Color(0xFFFFC107) else Color(0xFF2E241E),
+                                modifier = Modifier.size(16.dp)
+                            )
+                            Text(
+                                text = if (isDark) "Dark" else "Light",
+                                fontFamily = DMSansFontFamily,
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 12.sp,
+                                color = textColor
+                            )
                         }
                     }
 
-                    // Album Segment
-                    ViewToggleSegment(
-                        isSelected = isAlbum,
-                        onClick = { viewModel.setJournalView("album") }
+                    // View Toggle
+                    Row(
+                        modifier = Modifier
+                            .background(controlBgColor, RoundedCornerShape(11.dp))
+                            .padding(3.dp),
+                        horizontalArrangement = Arrangement.spacedBy(2.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        // Album Icon (3 stacked bars)
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(2.5.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
+                        // Grid Segment
+                        ViewToggleSegment(
+                            isSelected = !isAlbum,
+                            isDark = isDark,
+                            onClick = { viewModel.setJournalView("grid") }
                         ) {
-                            Box(modifier = Modifier.size(width = 15.dp, height = 4.dp).background(if (isAlbum) Color(0xFF2E241E) else Color(0xFF2E241E).copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
-                            Box(modifier = Modifier.size(width = 15.dp, height = 4.dp).background(if (isAlbum) Color(0xFF2E241E) else Color(0xFF2E241E).copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
-                            Box(modifier = Modifier.size(width = 15.dp, height = 4.dp).background(if (isAlbum) Color(0xFF2E241E) else Color(0xFF2E241E).copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
+                            // Grid Icon (2x2)
+                            Column(verticalArrangement = Arrangement.spacedBy(2.5.dp)) {
+                                Row(horizontalArrangement = Arrangement.spacedBy(2.5.dp)) {
+                                    Box(modifier = Modifier.size(6.dp).background(if (!isAlbum) textColor else textColor.copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
+                                    Box(modifier = Modifier.size(6.dp).background(if (!isAlbum) textColor else textColor.copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
+                                }
+                                Row(horizontalArrangement = Arrangement.spacedBy(2.5.dp)) {
+                                    Box(modifier = Modifier.size(6.dp).background(if (!isAlbum) textColor else textColor.copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
+                                    Box(modifier = Modifier.size(6.dp).background(if (!isAlbum) textColor else textColor.copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
+                                }
+                            }
+                        }
+
+                        // Album Segment
+                        ViewToggleSegment(
+                            isSelected = isAlbum,
+                            isDark = isDark,
+                            onClick = { viewModel.setJournalView("album") }
+                        ) {
+                            // Album Icon (3 stacked bars)
+                            Column(
+                                verticalArrangement = Arrangement.spacedBy(2.5.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Box(modifier = Modifier.size(width = 15.dp, height = 4.dp).background(if (isAlbum) textColor else textColor.copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
+                                Box(modifier = Modifier.size(width = 15.dp, height = 4.dp).background(if (isAlbum) textColor else textColor.copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
+                                Box(modifier = Modifier.size(width = 15.dp, height = 4.dp).background(if (isAlbum) textColor else textColor.copy(alpha = 0.35f), RoundedCornerShape(1.5.dp)))
+                            }
                         }
                     }
                 }
@@ -177,8 +237,8 @@ fun HomeScreen(
                     Surface(
                         onClick = { viewModel.setFilter(filter) },
                         shape = RoundedCornerShape(999.dp),
-                        color = if (isSelected) Color(0xFF2E241E) else Color(0xFFEBE6DF),
-                        contentColor = if (isSelected) Color(0xFFF8F5F0) else Color(0xFF50443D)
+                        color = if (isSelected) (if (isDark) Color(0xFFC05A3B) else Color(0xFF2E241E)) else controlBgColor,
+                        contentColor = if (isSelected) Color.White else (if (isDark) Color(0xFFEDE0DB) else Color(0xFF50443D))
                     ) {
                         Text(
                             text = label,
@@ -202,7 +262,7 @@ fun HomeScreen(
                     Text(
                         text = "No journal entries found.",
                         fontFamily = DMSansFontFamily,
-                        color = Color(0xFF50443D)
+                        color = subtextColor
                     )
                 }
             } else {
@@ -210,11 +270,13 @@ fun HomeScreen(
                     if (albumMode) {
                         AlbumFeed(
                             experiences = filteredExperiences,
+                            isDark = isDark,
                             onCafeClick = onCafeClick
                         )
                     } else {
                         GridFeed(
                             experiences = filteredExperiences,
+                            isDark = isDark,
                             onCafeClick = onCafeClick
                         )
                     }
@@ -227,6 +289,7 @@ fun HomeScreen(
 @Composable
 fun ViewToggleSegment(
     isSelected: Boolean,
+    isDark: Boolean = false,
     onClick: () -> Unit,
     content: @Composable () -> Unit
 ) {
@@ -234,7 +297,7 @@ fun ViewToggleSegment(
         onClick = onClick,
         modifier = Modifier.size(width = 34.dp, height = 30.dp),
         shape = RoundedCornerShape(8.dp),
-        color = if (isSelected) Color.White else Color.Transparent,
+        color = if (isSelected) (if (isDark) Color(0xFF2C221D) else Color.White) else Color.Transparent,
         shadowElevation = if (isSelected) 1.dp else 0.dp
     ) {
         Box(contentAlignment = Alignment.Center) {
@@ -246,6 +309,7 @@ fun ViewToggleSegment(
 @Composable
 fun GridFeed(
     experiences: List<CafeExperience>,
+    isDark: Boolean = false,
     onCafeClick: (String) -> Unit
 ) {
     LazyVerticalGrid(
@@ -259,6 +323,7 @@ fun GridFeed(
             GridCard(
                 experience = exp,
                 index = index,
+                isDark = isDark,
                 onClick = { onCafeClick(exp.id) }
             )
         }
@@ -269,12 +334,19 @@ fun GridFeed(
 fun GridCard(
     experience: CafeExperience,
     index: Int,
+    isDark: Boolean = false,
     onClick: () -> Unit
 ) {
+    val cardBg = if (isDark) Color(0xFF2C221D) else Color.White
+    val textColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E)
+    val subtextColor = if (isDark) Color(0xFFD5C2B9) else Color(0xFF2E241E).copy(alpha = 0.5f)
+    val chipBg = if (isDark) Color(0xCC2C221D) else Color(0xF2F8F5F0)
+    val chipTextColor = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.7f) else Color(0xFF2E241E).copy(alpha = 0.55f)
+
     Card(
         onClick = onClick,
         shape = RoundedCornerShape(18.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
+        colors = CardDefaults.cardColors(containerColor = cardBg),
         elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
@@ -303,7 +375,7 @@ fun GridCard(
                 // Drink Caption Chip (bottom-left, 8.dp inset)
                 val drinkText = experience.coffeeRecommendation.ifBlank { "COFFEE" }.uppercase()
                 Surface(
-                    color = Color(0xF2F8F5F0),
+                    color = chipBg,
                     shape = RoundedCornerShape(3.dp),
                     modifier = Modifier
                         .align(Alignment.BottomStart)
@@ -315,7 +387,7 @@ fun GridCard(
                         fontWeight = FontWeight.Medium,
                         fontSize = 8.sp,
                         letterSpacing = 1.sp,
-                        color = Color(0xFF2E241E).copy(alpha = 0.55f),
+                        color = chipTextColor,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.padding(horizontal = 5.dp, vertical = 2.dp)
@@ -334,7 +406,7 @@ fun GridCard(
                     fontWeight = FontWeight.Bold,
                     fontSize = 14.sp,
                     lineHeight = 17.5.sp,
-                    color = Color(0xFF2E241E),
+                    color = textColor,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis
                 )
@@ -349,15 +421,15 @@ fun GridCard(
                     fontFamily = DMSansFontFamily,
                     fontWeight = FontWeight.Normal,
                     fontSize = 11.sp,
-                    color = Color(0xFF2E241E).copy(alpha = 0.5f),
+                    color = subtextColor,
                     maxLines = 1
                 )
 
                 // 3 Rating Bars (COF, VIB, SEA)
                 Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                    RatingBarRow("COF", experience.rating.coffee)
-                    RatingBarRow("VIB", experience.rating.vibe)
-                    RatingBarRow("SEA", experience.rating.seating)
+                    RatingBarRow("COF", experience.rating.coffee, isDark)
+                    RatingBarRow("VIB", experience.rating.vibe, isDark)
+                    RatingBarRow("SEA", experience.rating.seating, isDark)
                 }
             }
         }
@@ -365,7 +437,10 @@ fun GridCard(
 }
 
 @Composable
-fun RatingBarRow(key: String, value: Float) {
+fun RatingBarRow(key: String, value: Float, isDark: Boolean = false) {
+    val keyColor = if (isDark) Color(0xFFD5C2B9).copy(alpha = 0.6f) else Color(0xFF2E241E).copy(alpha = 0.45f)
+    val trackColor = if (isDark) Color(0xFF3D322B) else Color(0xFFEBE6DF)
+
     Row(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(6.dp),
@@ -376,14 +451,14 @@ fun RatingBarRow(key: String, value: Float) {
             fontFamily = IbmPlexMonoFontFamily,
             fontWeight = FontWeight.Medium,
             fontSize = 8.5.sp,
-            color = Color(0xFF2E241E).copy(alpha = 0.45f),
+            color = keyColor,
             modifier = Modifier.width(24.dp)
         )
         Box(
             modifier = Modifier
                 .weight(1f)
                 .height(3.dp)
-                .background(Color(0xFFEBE6DF), RoundedCornerShape(2.dp))
+                .background(trackColor, RoundedCornerShape(2.dp))
         ) {
             val fraction = (value / 5f).coerceIn(0f, 1f)
             if (fraction > 0f) {
@@ -401,12 +476,25 @@ fun RatingBarRow(key: String, value: Float) {
 @Composable
 fun AlbumFeed(
     experiences: List<CafeExperience>,
+    isDark: Boolean = false,
     onCafeClick: (String) -> Unit
 ) {
     val monthSdf = remember { SimpleDateFormat("MMMM yyyy", Locale.ENGLISH) }
     val dayNumSdf = remember { SimpleDateFormat("dd", Locale.ENGLISH) }
     val dayNameSdf = remember { SimpleDateFormat("EEE", Locale.ENGLISH) }
     val dateLabelSdf = remember { SimpleDateFormat("dd MMM", Locale.ENGLISH) }
+
+    val monthHeaderColor = if (isDark) Color(0xFFD5C2B9).copy(alpha = 0.6f) else Color(0xFF2E241E).copy(alpha = 0.42f)
+    val dividerLineColor = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.15f) else Color(0xFF2E241E).copy(alpha = 0.12f)
+    val dayNumColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E)
+    val dayNameColor = if (isDark) Color(0xFFD5C2B9).copy(alpha = 0.6f) else Color(0xFF2E241E).copy(alpha = 0.4f)
+    val nameColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E)
+    val metaColor = if (isDark) Color(0xFFD5C2B9) else Color(0xFF2E241E).copy(alpha = 0.45f)
+    val notesColor = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.85f) else Color(0xFF2E241E).copy(alpha = 0.78f)
+    val captionBg = if (isDark) Color(0xCC2C221D) else Color(0xDCF3EEE6)
+    val captionTextColor = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.7f) else Color(0xFF2E241E).copy(alpha = 0.55f)
+    val tagBorderColor = if (isDark) Color(0xFFEDE0DB).copy(alpha = 0.2f) else Color(0xFF2E241E).copy(alpha = 0.18f)
+    val tagTextColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF50443D)
 
     LazyColumn(
         contentPadding = PaddingValues(bottom = 96.dp),
@@ -434,13 +522,13 @@ fun AlbumFeed(
                             fontWeight = FontWeight.Normal,
                             fontSize = 11.sp,
                             letterSpacing = 1.5.sp,
-                            color = Color(0xFF2E241E).copy(alpha = 0.42f)
+                            color = monthHeaderColor
                         )
                         Box(
                             modifier = Modifier
                                 .weight(1f)
                                 .height(1.dp)
-                                .background(Color(0xFF2E241E).copy(alpha = 0.12f))
+                                .background(dividerLineColor)
                         )
                     }
                 }
@@ -463,14 +551,14 @@ fun AlbumFeed(
                             fontFamily = NewsreaderFontFamily,
                             fontWeight = FontWeight.SemiBold,
                             fontSize = 19.sp,
-                            color = Color(0xFF2E241E)
+                            color = dayNumColor
                         )
                         Text(
                             text = dayNameSdf.format(date).uppercase(),
                             fontFamily = IbmPlexMonoFontFamily,
                             fontWeight = FontWeight.Normal,
                             fontSize = 9.sp,
-                            color = Color(0xFF2E241E).copy(alpha = 0.4f)
+                            color = dayNameColor
                         )
                         Box(
                             modifier = Modifier
@@ -478,7 +566,7 @@ fun AlbumFeed(
                                 .width(1.dp)
                                 .fillMaxHeight()
                                 .defaultMinSize(minHeight = 40.dp)
-                                .background(Color(0xFF2E241E).copy(alpha = 0.12f))
+                                .background(dividerLineColor)
                         )
                     }
 
@@ -513,7 +601,7 @@ fun AlbumFeed(
 
                             val captionText = "PHOTO — ${exp.coffeeRecommendation.ifBlank { exp.cafeName }}"
                             Surface(
-                                color = Color(0xDCF3EEE6),
+                                color = captionBg,
                                 shape = RoundedCornerShape(2.dp),
                                 modifier = Modifier
                                     .align(Alignment.BottomStart)
@@ -525,7 +613,7 @@ fun AlbumFeed(
                                     fontWeight = FontWeight.Medium,
                                     fontSize = 8.5.sp,
                                     letterSpacing = 0.8.sp,
-                                    color = Color(0xFF2E241E).copy(alpha = 0.55f),
+                                    color = captionTextColor,
                                     modifier = Modifier.padding(horizontal = 6.dp, vertical = 3.dp)
                                 )
                             }
@@ -543,7 +631,7 @@ fun AlbumFeed(
                                 fontWeight = FontWeight.Medium,
                                 fontSize = 19.sp,
                                 lineHeight = 23.sp,
-                                color = Color(0xFF2E241E),
+                                color = nameColor,
                                 modifier = Modifier.weight(1f, fill = false)
                             )
                             val avgFormatted = String.format(Locale.ENGLISH, "%.1f", exp.rating.average)
@@ -566,7 +654,7 @@ fun AlbumFeed(
                             fontWeight = FontWeight.Normal,
                             fontSize = 11.sp,
                             letterSpacing = 0.4.sp,
-                            color = Color(0xFF2E241E).copy(alpha = 0.45f)
+                            color = metaColor
                         )
 
                         // Notes
@@ -578,7 +666,7 @@ fun AlbumFeed(
                                 fontWeight = FontWeight.Normal,
                                 fontSize = 14.5.sp,
                                 lineHeight = 22.5.sp,
-                                color = Color(0xFF2E241E).copy(alpha = 0.78f)
+                                color = notesColor
                             )
                         }
 
@@ -591,7 +679,7 @@ fun AlbumFeed(
                                 exp.facilitiesTags.take(3).forEach { tag ->
                                     Box(
                                         modifier = Modifier
-                                            .border(1.dp, Color(0xFF2E241E).copy(alpha = 0.18f), RoundedCornerShape(3.dp))
+                                            .border(1.dp, tagBorderColor, RoundedCornerShape(3.dp))
                                             .padding(horizontal = 7.dp, vertical = 3.dp)
                                     ) {
                                         Text(
@@ -599,7 +687,7 @@ fun AlbumFeed(
                                             fontFamily = DMSansFontFamily,
                                             fontWeight = FontWeight.Normal,
                                             fontSize = 10.5.sp,
-                                            color = Color(0xFF50443D)
+                                            color = tagTextColor
                                         )
                                     }
                                 }
