@@ -5,6 +5,7 @@ import com.google.firebase.firestore.Query
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.tasks.await
 
 class CafeRepository {
@@ -17,17 +18,22 @@ class CafeRepository {
             close()
             return@callbackFlow
         }
-        val subscription = collection.orderBy("timestamp", Query.Direction.DESCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
+        val subscription = try {
+            collection.orderBy("timestamp", Query.Direction.DESCENDING)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        trySend(emptyList())
+                        return@addSnapshotListener
+                    }
+                    val experiences = snapshot?.documents?.mapNotNull { CafeExperience.fromDocument(it) } ?: emptyList()
+                    trySend(experiences)
                 }
-                val experiences = snapshot?.documents?.mapNotNull { CafeExperience.fromDocument(it) } ?: emptyList()
-                trySend(experiences)
-            }
-        awaitClose { subscription.remove() }
-    }
+        } catch (e: Exception) {
+            trySend(emptyList())
+            null
+        }
+        awaitClose { subscription?.remove() }
+    }.catch { emit(emptyList()) }
 
     fun getLocations(): Flow<List<String>> = callbackFlow {
         if (collection == null) {
@@ -35,18 +41,23 @@ class CafeRepository {
             close()
             return@callbackFlow
         }
-        val subscription = collection
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
+        val subscription = try {
+            collection
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        trySend(emptyList())
+                        return@addSnapshotListener
+                    }
+                    val experiences = snapshot?.documents?.mapNotNull { CafeExperience.fromDocument(it) } ?: emptyList()
+                    val locations = experiences.map { it.location }.filter { it.isNotBlank() }.distinct()
+                    trySend(locations)
                 }
-                val experiences = snapshot?.documents?.mapNotNull { CafeExperience.fromDocument(it) } ?: emptyList()
-                val locations = experiences.map { it.location }.filter { it.isNotBlank() }.distinct()
-                trySend(locations)
-            }
-        awaitClose { subscription.remove() }
-    }
+        } catch (e: Exception) {
+            trySend(emptyList())
+            null
+        }
+        awaitClose { subscription?.remove() }
+    }.catch { emit(emptyList()) }
 
     suspend fun saveExperience(experience: CafeExperience): Result<Unit> {
         return try {

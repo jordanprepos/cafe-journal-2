@@ -29,11 +29,15 @@ class AddCafeViewModel : ViewModel() {
     fun loadExperience(cafeId: String) {
         if (cafeId.isBlank()) return
         viewModelScope.launch {
-            repository.getExperiences().collect { list ->
-                val found = list.find { it.id == cafeId }
-                if (found != null) {
-                    _loadedExperience.value = found
+            try {
+                repository.getExperiences().collect { list ->
+                    val found = list.find { it.id == cafeId }
+                    if (found != null) {
+                        _loadedExperience.value = found
+                    }
                 }
+            } catch (e: Exception) {
+                // Graceful fallback on error
             }
         }
     }
