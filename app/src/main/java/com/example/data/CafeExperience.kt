@@ -78,4 +78,24 @@ data class CafeExperience(
             )
         }
     }
+
+    fun toMap(): Map<String, Any?> {
+        return mapOf(
+            "cafeName" to cafeName,
+            "location" to location,
+            "rating" to mapOf(
+                "coffee" to rating.coffee,
+                "vibe" to rating.vibe,
+                "wifi" to rating.wifi,
+                "seating" to rating.seating
+            ),
+            "coffeeRecommendation" to coffeeRecommendation,
+            "priceRange" to priceRange,
+            "facilitiesTags" to facilitiesTags,
+            "notes" to notes,
+            "photoUri" to photoUri,
+            "photoCaptions" to photoCaptions,
+            "timestamp" to timestamp
+        )
+    }
 }
