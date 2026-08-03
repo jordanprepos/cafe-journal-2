@@ -27,6 +27,7 @@ data class CafeExperience(
     val facilitiesTags: List<String> = emptyList(),
     val notes: String = "",
     val photoUri: String = "",
+    val photoCaptions: Map<String, String> = emptyMap(),
     val timestamp: Timestamp = Timestamp.now()
 ) {
     companion object {
@@ -40,6 +41,10 @@ data class CafeExperience(
             val facilitiesTags = (doc.get("facilitiesTags") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
             val notes = doc.getString("notes") ?: ""
             val photoUri = doc.getString("photoUri") ?: ""
+            val photoCaptionsRaw = doc.get("photoCaptions") as? Map<*, *>
+            val photoCaptions = photoCaptionsRaw?.mapNotNull { (k, v) ->
+                if (k != null && v != null) k.toString() to v.toString() else null
+            }?.toMap() ?: emptyMap()
             val timestamp = doc.getTimestamp("timestamp") ?: Timestamp.now()
 
             val ratingRaw = doc.get("rating")
@@ -68,6 +73,7 @@ data class CafeExperience(
                 facilitiesTags = facilitiesTags,
                 notes = notes,
                 photoUri = photoUri,
+                photoCaptions = photoCaptions,
                 timestamp = timestamp
             )
         }

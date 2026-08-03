@@ -1,8 +1,10 @@
 package com.example.ui.detail
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
@@ -14,20 +16,26 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.EditNote
+import androidx.compose.material.icons.outlined.Subtitles
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -65,11 +73,16 @@ fun CafeDetailScreen(
     val boxBgColor = if (isDark) Color(0xFF3D322B) else Color(0xFFEBE6DF)
     val tagTextColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF50443D)
 
+    val exp = experience
+    var localCaptions by remember(exp?.id, exp?.photoCaptions) { mutableStateOf(exp?.photoCaptions ?: emptyMap()) }
+    var showCaptionDialog by remember { mutableStateOf(false) }
+    var selectedPhotoForCaption by remember { mutableStateOf<String?>(null) }
+    var captionInputText by remember { mutableStateOf("") }
+
     Surface(
         modifier = Modifier.fillMaxSize(),
         color = bgColor
     ) {
-        val exp = experience
         if (exp == null) {
             Box(
                 modifier = Modifier.fillMaxSize(),
@@ -102,12 +115,97 @@ fun CafeDetailScreen(
                             state = pagerState,
                             modifier = Modifier.fillMaxSize()
                         ) { page ->
-                            AsyncImage(
-                                model = detailPhotoList[page],
-                                contentDescription = "${exp.cafeName} photo ${page + 1}",
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier.fillMaxSize()
-                            )
+                            val photoUri = detailPhotoList[page]
+                            val captionText = localCaptions[photoUri]
+
+                            @OptIn(ExperimentalFoundationApi::class)
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .combinedClickable(
+                                        onLongClick = {
+                                            selectedPhotoForCaption = photoUri
+                                            captionInputText = localCaptions[photoUri] ?: ""
+                                            showCaptionDialog = true
+                                        },
+                                        onClick = {}
+                                    )
+                            ) {
+                                AsyncImage(
+                                    model = photoUri,
+                                    contentDescription = "${exp.cafeName} photo ${page + 1}",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier.fillMaxSize()
+                                )
+
+                                if (!captionText.isNullOrBlank()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .align(Alignment.BottomStart)
+                                            .fillMaxWidth()
+                                            .background(
+                                                Brush.verticalGradient(
+                                                    colors = listOf(
+                                                        Color.Transparent,
+                                                        Color.Black.copy(alpha = 0.45f),
+                                                        Color.Black.copy(alpha = 0.82f)
+                                                    )
+                                                )
+                                            )
+                                            .padding(start = 16.dp, end = 84.dp, top = 22.dp, bottom = 12.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(6.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.Subtitles,
+                                                contentDescription = "Caption",
+                                                tint = Color(0xFFF1D1C3),
+                                                modifier = Modifier.size(15.dp)
+                                            )
+                                            Text(
+                                                text = captionText,
+                                                fontFamily = DMSansFontFamily,
+                                                fontWeight = FontWeight.Medium,
+                                                color = Color.White,
+                                                fontSize = 12.5.sp,
+                                                lineHeight = 16.sp,
+                                                maxLines = 2,
+                                                overflow = TextOverflow.Ellipsis
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    Surface(
+                                        color = Color.Black.copy(alpha = 0.45f),
+                                        shape = RoundedCornerShape(12.dp),
+                                        modifier = Modifier
+                                            .align(Alignment.BottomStart)
+                                            .padding(start = 16.dp, bottom = 12.dp)
+                                    ) {
+                                        Row(
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                                        ) {
+                                            Icon(
+                                                imageVector = Icons.Outlined.EditNote,
+                                                contentDescription = null,
+                                                tint = Color.White.copy(alpha = 0.85f),
+                                                modifier = Modifier.size(13.dp)
+                                            )
+                                            Text(
+                                                text = "Hold to add caption",
+                                                fontFamily = DMSansFontFamily,
+                                                fontWeight = FontWeight.Normal,
+                                                color = Color.White.copy(alpha = 0.85f),
+                                                fontSize = 10.5.sp
+                                            )
+                                        }
+                                    }
+                                }
+                            }
                         }
 
                         // Photo Counter indicator badge if multiple photos exist
@@ -366,17 +464,25 @@ fun CafeDetailScreen(
                                         Modifier.border(2.5.dp, Color(0xFFC05A3B), RoundedCornerShape(12.dp))
                                     } else Modifier
 
+                                    @OptIn(ExperimentalFoundationApi::class)
                                     Box(
                                         modifier = Modifier
                                             .size(110.dp)
                                             .clip(RoundedCornerShape(12.dp))
                                             .then(borderModifier)
                                             .background(boxBgColor)
-                                            .clickable {
-                                                coroutineScope.launch {
-                                                    pagerState.animateScrollToPage(idx)
+                                            .combinedClickable(
+                                                onLongClick = {
+                                                    selectedPhotoForCaption = pUri
+                                                    captionInputText = localCaptions[pUri] ?: ""
+                                                    showCaptionDialog = true
+                                                },
+                                                onClick = {
+                                                    coroutineScope.launch {
+                                                        pagerState.animateScrollToPage(idx)
+                                                    }
                                                 }
-                                            }
+                                            )
                                     ) {
                                         AsyncImage(
                                             model = pUri,
@@ -384,6 +490,27 @@ fun CafeDetailScreen(
                                             contentScale = ContentScale.Crop,
                                             modifier = Modifier.fillMaxSize()
                                         )
+
+                                        val thumbCaption = localCaptions[pUri]
+                                        if (!thumbCaption.isNullOrBlank()) {
+                                            Surface(
+                                                color = Color.Black.copy(alpha = 0.7f),
+                                                shape = CircleShape,
+                                                modifier = Modifier
+                                                    .align(Alignment.BottomEnd)
+                                                    .padding(6.dp)
+                                                    .size(20.dp)
+                                            ) {
+                                                Box(contentAlignment = Alignment.Center) {
+                                                    Icon(
+                                                        imageVector = Icons.Outlined.Subtitles,
+                                                        contentDescription = "Has Caption",
+                                                        tint = Color(0xFFF1D1C3),
+                                                        modifier = Modifier.size(12.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -465,6 +592,133 @@ fun CafeDetailScreen(
                 }
             }
         }
+    }
+
+    if (showCaptionDialog && selectedPhotoForCaption != null) {
+        val photoUriToEdit = selectedPhotoForCaption!!
+        AlertDialog(
+            onDismissRequest = { showCaptionDialog = false },
+            containerColor = if (isDark) Color(0xFF2C221D) else Color(0xFFF8F5F0),
+            titleContentColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E),
+            textContentColor = if (isDark) Color(0xFFEDE0DB) else Color(0xFF2E241E),
+            title = {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Subtitles,
+                        contentDescription = null,
+                        tint = Color(0xFFC05A3B),
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Text(
+                        text = if (localCaptions[photoUriToEdit].isNullOrBlank()) "Add Photo Caption" else "Edit Photo Caption",
+                        fontFamily = NewsreaderFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        fontSize = 19.sp
+                    )
+                }
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(130.dp)
+                            .clip(RoundedCornerShape(12.dp))
+                            .background(if (isDark) Color(0xFF231A16) else Color(0xFFE2DCD5))
+                    ) {
+                        AsyncImage(
+                            model = photoUriToEdit,
+                            contentDescription = "Photo preview",
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier.fillMaxSize()
+                        )
+                    }
+
+                    OutlinedTextField(
+                        value = captionInputText,
+                        onValueChange = { captionInputText = it },
+                        label = {
+                            Text(
+                                "Brief Caption",
+                                fontFamily = DMSansFontFamily,
+                                fontSize = 12.sp
+                            )
+                        },
+                        placeholder = {
+                            Text(
+                                "e.g., Cozy quiet nook with outlets",
+                                fontFamily = DMSansFontFamily,
+                                fontSize = 12.sp
+                            )
+                        },
+                        singleLine = false,
+                        maxLines = 3,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = Color(0xFFC05A3B),
+                            unfocusedBorderColor = if (isDark) Color(0xFF42352E) else Color(0xFFD4CDC5)
+                        ),
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val trimmed = captionInputText.trim()
+                        val newMap = if (trimmed.isBlank()) {
+                            localCaptions - photoUriToEdit
+                        } else {
+                            localCaptions + (photoUriToEdit to trimmed)
+                        }
+                        localCaptions = newMap
+                        viewModel.updatePhotoCaption(photoUriToEdit, trimmed)
+                        showCaptionDialog = false
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC05A3B)),
+                    shape = RoundedCornerShape(10.dp)
+                ) {
+                    Text(
+                        "Save Caption",
+                        fontFamily = DMSansFontFamily,
+                        fontWeight = FontWeight.Medium,
+                        color = Color.White
+                    )
+                }
+            },
+            dismissButton = {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    if (!localCaptions[photoUriToEdit].isNullOrBlank()) {
+                        TextButton(
+                            onClick = {
+                                val newMap = localCaptions - photoUriToEdit
+                                localCaptions = newMap
+                                viewModel.updatePhotoCaption(photoUriToEdit, "")
+                                showCaptionDialog = false
+                            }
+                        ) {
+                            Text(
+                                "Remove",
+                                fontFamily = DMSansFontFamily,
+                                color = Color(0xFFD9534F)
+                            )
+                        }
+                    }
+                    TextButton(
+                        onClick = { showCaptionDialog = false }
+                    ) {
+                        Text(
+                            "Cancel",
+                            fontFamily = DMSansFontFamily,
+                            color = if (isDark) Color(0xFFD0C3BC) else Color(0xFF6E625A)
+                        )
+                    }
+                }
+            }
+        )
     }
 }
 

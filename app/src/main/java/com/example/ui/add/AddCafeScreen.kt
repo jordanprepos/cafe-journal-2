@@ -45,8 +45,8 @@ import com.example.ui.theme.NewsreaderFontFamily
 val ALL_FACILITY_TAGS = listOf(
     "WiFi", "Power Outlets", "Parking", "Air Conditioning",
     "Outdoor Seating", "Pet Friendly", "Restroom", "Prayer Room",
-    "Laptop Friendly", "Open Late", "Card / QRIS", "Halal",
-    "Full Food Menu", "Wheelchair Accessible"
+    "Laptop Friendly", "Open Late", "Close Late", "24Hours", "Card / QRIS",
+    "Halal", "Full Food Menu", "Wheelchair Accessible"
 )
 
 val ALL_VIBE_TAGS = listOf(

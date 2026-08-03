@@ -67,4 +67,25 @@ class CafeRepository {
     suspend fun addExperience(experience: CafeExperience): Result<Unit> {
         return saveExperience(experience)
     }
+
+    suspend fun updatePhotoCaption(experienceId: String, photoUri: String, caption: String): Result<Unit> {
+        return try {
+            if (collection == null) {
+                return Result.failure(Exception("Firebase not configured"))
+            }
+            val docRef = collection.document(experienceId)
+            val snapshot = docRef.get().await()
+            val currentExp = CafeExperience.fromDocument(snapshot) ?: return Result.failure(Exception("Experience not found"))
+            val updatedCaptions = currentExp.photoCaptions.toMutableMap()
+            if (caption.isBlank()) {
+                updatedCaptions.remove(photoUri)
+            } else {
+                updatedCaptions[photoUri] = caption.trim()
+            }
+            docRef.update("photoCaptions", updatedCaptions).await()
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }

@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 class CafeDetailViewModel(private val cafeId: String) : ViewModel() {
     private val repository = CafeRepository()
@@ -20,6 +21,12 @@ class CafeDetailViewModel(private val cafeId: String) : ViewModel() {
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
         )
+
+    fun updatePhotoCaption(photoUri: String, caption: String) {
+        viewModelScope.launch {
+            repository.updatePhotoCaption(cafeId, photoUri, caption)
+        }
+    }
 }
 
 class CafeDetailViewModelFactory(private val cafeId: String) : ViewModelProvider.Factory {
