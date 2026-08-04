@@ -1,5 +1,10 @@
 package com.example.ui.navigation
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
@@ -77,7 +82,11 @@ fun AppNavigation() {
             val currentRoute = currentDestination?.route
             val showBottomBar = currentRoute in listOf(ROUTE_HOME, ROUTE_LOCATIONS, ROUTE_STATS, ROUTE_PROFILE)
 
-            if (showBottomBar) {
+            AnimatedVisibility(
+                visible = showBottomBar,
+                enter = slideInVertically(initialOffsetY = { it }) + fadeIn(),
+                exit = slideOutVertically(targetOffsetY = { it }) + fadeOut()
+            ) {
                 NavigationBar(
                     containerColor = if (isDark) Color(0xFF2C221D) else Color.White,
                     tonalElevation = 0.dp

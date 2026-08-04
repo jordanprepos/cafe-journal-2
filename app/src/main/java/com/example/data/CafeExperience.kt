@@ -34,18 +34,23 @@ data class CafeExperience(
         fun fromDocument(doc: DocumentSnapshot): CafeExperience? {
             if (!doc.exists()) return null
             val id = doc.id
-            val cafeName = doc.getString("cafeName") ?: ""
-            val location = doc.getString("location") ?: ""
-            val coffeeRecommendation = doc.getString("coffeeRecommendation") ?: ""
+            val cafeName = doc.getString("name") ?: doc.getString("cafeName") ?: ""
+            val location = doc.getString("address") ?: doc.getString("location") ?: ""
+            val coffeeRecommendation = doc.getString("favorite_drink") ?: doc.getString("coffeeRecommendation") ?: ""
             val priceRange = doc.getString("priceRange") ?: ""
-            val facilitiesTags = (doc.get("facilitiesTags") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
+            val facilitiesTags = (doc.get("tags") as? List<*>)?.mapNotNull { it?.toString() } 
+                ?: (doc.get("facilitiesTags") as? List<*>)?.mapNotNull { it?.toString() } ?: emptyList()
             val notes = doc.getString("notes") ?: ""
-            val photoUri = doc.getString("photoUri") ?: ""
+            
+            val photosList = doc.get("photos") as? List<*>
+            val photoUri = photosList?.firstOrNull()?.toString() ?: doc.getString("photoUri") ?: ""
+            
             val photoCaptionsRaw = doc.get("photoCaptions") as? Map<*, *>
             val photoCaptions = photoCaptionsRaw?.mapNotNull { (k, v) ->
                 if (k != null && v != null) k.toString() to v.toString() else null
             }?.toMap() ?: emptyMap()
-            val timestamp = doc.getTimestamp("timestamp") ?: Timestamp.now()
+            
+            val timestamp = doc.getTimestamp("created_at") ?: doc.getTimestamp("timestamp") ?: Timestamp.now()
 
             val ratingRaw = doc.get("rating")
             val rating = when (ratingRaw) {
@@ -80,22 +85,24 @@ data class CafeExperience(
     }
 
     fun toMap(): Map<String, Any?> {
+        val isoDate = java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss'Z'", java.util.Locale.US).apply {
+            timeZone = java.util.TimeZone.getTimeZone("UTC")
+        }.format(timestamp.toDate())
+        
+        val safeName = if (cafeName.isNotBlank()) cafeName.take(200) else "Unknown"
+
         return mapOf(
-            "cafeName" to cafeName,
-            "location" to location,
-            "rating" to mapOf(
-                "coffee" to rating.coffee,
-                "vibe" to rating.vibe,
-                "wifi" to rating.wifi,
-                "seating" to rating.seating
-            ),
-            "coffeeRecommendation" to coffeeRecommendation,
-            "priceRange" to priceRange,
-            "facilitiesTags" to facilitiesTags,
-            "notes" to notes,
-            "photoUri" to photoUri,
-            "photoCaptions" to photoCaptions,
-            "timestamp" to timestamp
+            "name" to safeName,
+            "created_at" to timestamp,
+            "photos" to if (photoUri.isNotBlank()) listOf(photoUri) else emptyList<String>(),
+            "location_link" to location,
+            "address" to location,
+            "notes" to notes.take(20000),
+            "rating" to rating.average.toInt().coerceIn(0, 5),
+            "favorite_drink" to coffeeRecommendation,
+            "visited_date" to isoDate,
+            "tags" to facilitiesTags.take(20),
+            "photoCaptions" to photoCaptions
         )
     }
 }

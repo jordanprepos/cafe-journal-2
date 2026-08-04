@@ -23,6 +23,12 @@ class AddCafeViewModel : ViewModel() {
     private val _saveSuccess = MutableStateFlow(false)
     val saveSuccess: StateFlow<Boolean> = _saveSuccess.asStateFlow()
 
+    private val _isDeleting = MutableStateFlow(false)
+    val isDeleting: StateFlow<Boolean> = _isDeleting.asStateFlow()
+
+    private val _deleteSuccess = MutableStateFlow(false)
+    val deleteSuccess: StateFlow<Boolean> = _deleteSuccess.asStateFlow()
+
     private val _loadedExperience = MutableStateFlow<CafeExperience?>(null)
     val loadedExperience: StateFlow<CafeExperience?> = _loadedExperience.asStateFlow()
 
@@ -82,6 +88,21 @@ class AddCafeViewModel : ViewModel() {
                 _saveError.value = result.exceptionOrNull()?.message ?: "Failed to save"
             }
             _isSaving.value = false
+        }
+    }
+
+    fun deleteExperience(cafeId: String) {
+        val targetId = cafeId.ifBlank { _loadedExperience.value?.id ?: "" }
+        if (targetId.isBlank()) return
+        viewModelScope.launch {
+            _isDeleting.value = true
+            val result = repository.deleteExperience(targetId)
+            if (result.isSuccess) {
+                _deleteSuccess.value = true
+            } else {
+                _saveError.value = result.exceptionOrNull()?.message ?: "Failed to delete"
+            }
+            _isDeleting.value = false
         }
     }
 }

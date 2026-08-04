@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -81,7 +82,11 @@ fun AddCafeScreen(
     val isSaving by viewModel.isSaving.collectAsState()
     val saveError by viewModel.saveError.collectAsState()
     val saveSuccess by viewModel.saveSuccess.collectAsState()
+    val isDeleting by viewModel.isDeleting.collectAsState()
+    val deleteSuccess by viewModel.deleteSuccess.collectAsState()
     val loadedExperience by viewModel.loadedExperience.collectAsState()
+
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val themeRepository = remember { ThemeRepository(context) }
@@ -154,8 +159,8 @@ fun AddCafeScreen(
         }
     }
 
-    LaunchedEffect(saveSuccess) {
-        if (saveSuccess) {
+    LaunchedEffect(saveSuccess, deleteSuccess) {
+        if (saveSuccess || deleteSuccess) {
             onBack()
         }
     }
@@ -189,27 +194,44 @@ fun AddCafeScreen(
                     fontSize = 16.sp,
                     color = textColor
                 )
-                Text(
-                    text = "Save",
-                    fontFamily = DMSansFontFamily,
-                    fontWeight = FontWeight.SemiBold,
-                    fontSize = 14.sp,
-                    color = Color(0xFFC05A3B),
-                    modifier = Modifier.clickable(enabled = !isSaving) {
-                        viewModel.saveExperience(
-                            id = loadedExperience?.id ?: "",
-                            cafeName = cafeName,
-                            location = area,
-                            rating = CafeRating(coffeeRating, vibeRating, wifiRating, seatingRating),
-                            coffeeRecommendation = drink,
-                            priceRange = price,
-                            facilitiesTags = selectedTags.toList(),
-                            notes = note,
-                            photoUri = photoUri,
-                            timestamp = loadedExperience?.timestamp
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (isEdit) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Delete entry",
+                            tint = Color(0xFFBA1A1A),
+                            modifier = Modifier
+                                .size(20.dp)
+                                .clickable(enabled = !isDeleting) {
+                                    showDeleteDialog = true
+                                }
                         )
                     }
-                )
+                    Text(
+                        text = "Save",
+                        fontFamily = DMSansFontFamily,
+                        fontWeight = FontWeight.SemiBold,
+                        fontSize = 14.sp,
+                        color = Color(0xFFC05A3B),
+                        modifier = Modifier.clickable(enabled = !isSaving && !isDeleting) {
+                            viewModel.saveExperience(
+                                id = loadedExperience?.id ?: "",
+                                cafeName = cafeName,
+                                location = area,
+                                rating = CafeRating(coffeeRating, vibeRating, wifiRating, seatingRating),
+                                coffeeRecommendation = drink,
+                                priceRange = price,
+                                facilitiesTags = selectedTags.toList(),
+                                notes = note,
+                                photoUri = photoUri,
+                                timestamp = loadedExperience?.timestamp
+                            )
+                        }
+                    )
+                }
             }
             HorizontalDivider(color = dividerColor, thickness = 1.dp)
 
@@ -603,7 +625,7 @@ fun AddCafeScreen(
                             timestamp = loadedExperience?.timestamp
                         )
                     },
-                    enabled = !isSaving,
+                    enabled = !isSaving && !isDeleting,
                     shape = RoundedCornerShape(14.dp),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFC05A3B),
@@ -621,9 +643,83 @@ fun AddCafeScreen(
                     )
                 }
 
+                if (isEdit) {
+                    OutlinedButton(
+                        onClick = { showDeleteDialog = true },
+                        enabled = !isSaving && !isDeleting,
+                        shape = RoundedCornerShape(14.dp),
+                        border = BorderStroke(1.dp, Color(0xFFBA1A1A).copy(alpha = 0.5f)),
+                        colors = ButtonDefaults.outlinedButtonColors(
+                            contentColor = Color(0xFFBA1A1A)
+                        ),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(50.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Delete,
+                            contentDescription = "Delete entry",
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = if (isDeleting) "Deleting..." else "Delete entry",
+                            fontFamily = DMSansFontFamily,
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        )
+                    }
+                }
+
                 Spacer(modifier = Modifier.height(20.dp))
             }
         }
+    }
+
+    if (showDeleteDialog) {
+        AlertDialog(
+            onDismissRequest = { showDeleteDialog = false },
+            title = {
+                Text(
+                    text = "Delete journal entry?",
+                    fontFamily = DMSansFontFamily,
+                    fontWeight = FontWeight.Bold,
+                    color = textColor
+                )
+            },
+            text = {
+                Text(
+                    text = "Are you sure you want to delete this cafe entry? This action cannot be undone.",
+                    fontFamily = DMSansFontFamily,
+                    color = subtextColor
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showDeleteDialog = false
+                        viewModel.deleteExperience(loadedExperience?.id ?: cafeId ?: "")
+                    }
+                ) {
+                    Text(
+                        text = "Delete",
+                        fontFamily = DMSansFontFamily,
+                        fontWeight = FontWeight.Bold,
+                        color = Color(0xFFBA1A1A)
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showDeleteDialog = false }) {
+                    Text(
+                        text = "Cancel",
+                        fontFamily = DMSansFontFamily,
+                        color = subtextColor
+                    )
+                }
+            },
+            containerColor = cardBgColor
+        )
     }
 }
 

@@ -88,7 +88,24 @@ fun CafeDetailScreen(
                 modifier = Modifier.fillMaxSize(),
                 contentAlignment = Alignment.Center
             ) {
-                CircularProgressIndicator(color = Color(0xFFC05A3B))
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Entry not found",
+                        fontFamily = DMSansFontFamily,
+                        fontSize = 16.sp,
+                        color = textColor
+                    )
+                    Button(
+                        onClick = onBack,
+                        shape = RoundedCornerShape(12.dp),
+                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFC05A3B))
+                    ) {
+                        Text("Go back", fontFamily = DMSansFontFamily, color = Color.White)
+                    }
+                }
             }
         } else {
             Column(

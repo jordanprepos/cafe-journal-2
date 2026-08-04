@@ -14,32 +14,37 @@ import kotlinx.coroutines.tasks.await
 
 class CafeRepository {
     private val db = try { FirebaseFirestore.getInstance() } catch (e: Exception) { null }
-    private val collection = db?.collection("cafe_experiences")
 
     companion object {
         private val localExperiences = MutableStateFlow<List<CafeExperience>>(emptyList())
     }
 
-    private suspend fun ensureAuth() {
-        try {
+    private suspend fun ensureAuth(): String? {
+        return try {
             val auth = FirebaseAuth.getInstance()
             if (auth.currentUser == null) {
                 auth.signInAnonymously().await()
             }
+            auth.currentUser?.uid
         } catch (e: Exception) {
-            // Ignore if anonymous auth is not enabled in Firebase project
+            null
         }
     }
 
+    private suspend fun getCollection(): com.google.firebase.firestore.CollectionReference? {
+        val uid = ensureAuth() ?: return null
+        return db?.collection("users")?.document(uid)?.collection("cafes")
+    }
+
     private val remoteExperiences = callbackFlow<List<CafeExperience>> {
+        val collection = getCollection()
         if (collection == null) {
             trySend(emptyList())
             close()
             return@callbackFlow
         }
-        ensureAuth()
         val subscription = try {
-            collection.orderBy("timestamp", Query.Direction.DESCENDING)
+            collection.orderBy("created_at", Query.Direction.DESCENDING)
                 .addSnapshotListener { snapshot, error ->
                     if (error != null) {
                         trySend(emptyList())
@@ -84,8 +89,8 @@ class CafeRepository {
 
         // Attempt sync to Firestore in background
         return try {
+            val collection = getCollection()
             if (collection != null) {
-                ensureAuth()
                 val data = expToSave.toMap()
                 collection.document(assignedId).set(data).await()
             }
@@ -98,6 +103,25 @@ class CafeRepository {
 
     suspend fun addExperience(experience: CafeExperience): Result<Unit> {
         return saveExperience(experience)
+    }
+
+    suspend fun deleteExperience(experienceId: String): Result<Unit> {
+        if (experienceId.isBlank()) return Result.success(Unit)
+
+        // Remove from local memory flow first so UI updates immediately
+        val currentLocal = localExperiences.value.toMutableList()
+        currentLocal.removeAll { it.id == experienceId }
+        localExperiences.value = currentLocal
+
+        return try {
+            val collection = getCollection()
+            if (collection != null) {
+                collection.document(experienceId).delete().await()
+            }
+            Result.success(Unit)
+        } catch (e: Exception) {
+            Result.success(Unit)
+        }
     }
 
     suspend fun updatePhotoCaption(experienceId: String, photoUri: String, caption: String): Result<Unit> {
@@ -118,8 +142,8 @@ class CafeRepository {
         }
 
         return try {
+            val collection = getCollection()
             if (collection != null) {
-                ensureAuth()
                 val docRef = collection.document(experienceId)
                 val snapshot = docRef.get().await()
                 val currentExp = CafeExperience.fromDocument(snapshot)
